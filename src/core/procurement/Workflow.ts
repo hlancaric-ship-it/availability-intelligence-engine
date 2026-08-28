@@ -82,4 +82,24 @@ export class ProcurementWorkflow {
             throw error;
         }
     }
+
+    public async cancelPurchaseOrder(tenantId: string, eventId: string, purchaseOrderId: string) {
+        if (!await this.idempotency.claim(eventId, 'CANCEL_PO')) {
+            this.logger.info('PO cancellation skipped (idempotent)', { tenantId, eventId, purchaseOrderId });
+            return;
+        }
+        try {
+            this.logger.info('Cancelling PO', { tenantId, eventId, purchaseOrderId });
+            await this.purchaseOrders.cancel(tenantId, purchaseOrderId);
+            await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_CANCELLED', entityId: eventId, payload: { purchaseOrderId }, occurredAt: new Date().toISOString() });
+            await this.idempotency.complete(eventId, 'CANCEL_PO');
+            this.logger.info('PO cancelled successfully', { tenantId, eventId, purchaseOrderId });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to cancel PO', { tenantId, eventId, purchaseOrderId, error: safeError });
+            await this.idempotency.fail(eventId, 'CANCEL_PO');
+            await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_CANCELLATION_FAILED', entityId: eventId, payload: { purchaseOrderId, error: safeError }, occurredAt: new Date().toISOString() });
+            throw error;
+        }
+    }
 }

@@ -19,7 +19,7 @@ describe('ProcurementWorkflow Resilience', () => {
     test('scenario 1: retry after crash during dispatch never duplicates dispatch', async () => {
         const platform = { fetchUnfulfilledOrderLines: vi.fn().mockResolvedValue([{ id: 'req1', orderId: 'o1', productId: 'p', variantId: 'v', sku: 's', quantity: 5, ownStockQuantity: 0, createdAt: '2026-01-01' }]) };
         const catalog = { fetchOffers: vi.fn().mockResolvedValue([{ supplierId: 'sup1', supplierSku: 'sku', productId: 'p', variantId: 'v', availableQuantity: 10, unitPrice: 100, currency: 'CZK', leadTimeDays: 1, active: true }]) };
-        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn() };
+        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), cancel: vi.fn() };
         
         let dispatchCalls = 0;
         const supplierDispatch = { 
@@ -56,7 +56,7 @@ describe('ProcurementWorkflow Resilience', () => {
     test('scenario 2: parallel PO generation (concurrency lock)', async () => {
         const platform = { fetchUnfulfilledOrderLines: vi.fn().mockResolvedValue([]) };
         const catalog = { fetchOffers: vi.fn().mockResolvedValue([]) };
-        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn() };
+        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), cancel: vi.fn() };
         const supplierDispatch = { dispatchPurchaseOrder: vi.fn() };
         const readiness = { markReadyToShip: vi.fn() };
         const idempotency = new InMemoryIdempotency();
@@ -91,7 +91,7 @@ describe('ProcurementWorkflow Resilience', () => {
             }]
         }];
         
-        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), getOrdersByIds: vi.fn().mockResolvedValue(orders) };
+        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), getOrdersByIds: vi.fn().mockResolvedValue(orders), cancel: vi.fn() };
         const supplierDispatch = { dispatchPurchaseOrder: vi.fn() };
         const readiness = { markReadyToShip: vi.fn() };
         const idempotency = new InMemoryIdempotency();
@@ -119,5 +119,23 @@ describe('ProcurementWorkflow Resilience', () => {
         const alloc3 = await workflow.receive('t1', 'rcv-3', [{ purchaseOrderId: 'po1', procurementLineId: 'line1', receivedQuantity: 5 }]);
         expect(alloc3).toEqual([]); // 0 allocated
         expect(orders[0].lines[0].receivedQuantity).toBe(10);
+    });
+
+    test('scenario 4: cancel purchase order', async () => {
+        const platform = { fetchUnfulfilledOrderLines: vi.fn() };
+        const catalog = { fetchOffers: vi.fn() };
+        const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), cancel: vi.fn() };
+        const supplierDispatch = { dispatchPurchaseOrder: vi.fn() };
+        const readiness = { markReadyToShip: vi.fn() };
+        const idempotency = new InMemoryIdempotency();
+        const audit = { append: vi.fn() };
+        const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+        const workflow = new ProcurementWorkflow(platform, catalog, purchaseOrders, supplierDispatch, readiness, idempotency, audit, logger);
+
+        await workflow.cancelPurchaseOrder('t1', 'evt-cancel-1', 'po1');
+        
+        expect(purchaseOrders.cancel).toHaveBeenCalledWith('t1', 'po1');
+        expect(audit.append).toHaveBeenCalledWith(expect.objectContaining({ type: 'PURCHASE_ORDER_CANCELLED' }));
     });
 });
