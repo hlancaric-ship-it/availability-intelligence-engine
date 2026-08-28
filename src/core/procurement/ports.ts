@@ -1,24 +1,29 @@
-import type { Allocation, CustomerOrderLine, GoodsReceiptLine, ProcurementPlan, PurchaseOrder, SupplierOffer } from './types.js';
+import type { PurchaseOrder, SupplierStatusUpdate } from './types.js';
 
-/** External effects intentionally live behind ports; the core never calls Shoptet or suppliers directly. */
 export interface CommercePlatformPort {
-    fetchUnfulfilledOrderLines(): Promise<CustomerOrderLine[]>;
-}
-
-/** Internal state only: never a call back to the commerce platform. */
-export interface FulfillmentReadinessPort {
-    markReadyToShip(allocations: Allocation[]): Promise<void>;
+    fetchUnfulfilledOrderLines(): Promise<any[]>;
 }
 
 export interface SupplierCatalogPort {
-    fetchOffers(): Promise<SupplierOffer[]>;
+    fetchOffers(): Promise<any[]>;
 }
 
 export interface PurchaseOrderPort {
-    savePlan(tenantId: string, plan: ProcurementPlan): Promise<void>;
+    savePlan(tenantId: string, plan: any): Promise<void>;
     markAsSent(orderId: string): Promise<void>;
-    recordReceipt(receipt: GoodsReceiptLine[]): Promise<void>;
+    recordReceipt(receipt: any[]): Promise<void>;
     getOrdersByIds(tenantId: string, orderIds: string[]): Promise<PurchaseOrder[]>;
+    cancel(tenantId: string, orderId: string): Promise<void>;
+    updateStatus(tenantId: string, orderId: string, status: 'ACCEPTED' | 'SHIPPED' | 'CANCELLED'): Promise<void>;
+}
+
+export interface SupplierDispatchPort {
+    dispatchPurchaseOrder(order: PurchaseOrder): Promise<{ externalId: string }>;
+    fetchStatusUpdates(): Promise<SupplierStatusUpdate[]>;
+}
+
+export interface FulfillmentReadinessPort {
+    markReadyToShip(allocations: any[]): Promise<void>;
 }
 
 export interface IdempotencyPort {
@@ -28,12 +33,11 @@ export interface IdempotencyPort {
 }
 
 export interface AuditPort {
-    append(event: { tenantId: string; type: string; entityId: string; payload: unknown; occurredAt: string }): Promise<void>;
+    append(entry: { tenantId: string; type: string; entityId: string; payload: any; occurredAt: string }): Promise<void>;
 }
-export interface SupplierDispatchPort { dispatchPurchaseOrder(order: PurchaseOrder): Promise<{ externalId: string }>; }
 
 export interface LoggerPort {
-    info(message: string, context?: Record<string, unknown>): void;
-    warn(message: string, context?: Record<string, unknown>): void;
-    error(message: string, context?: Record<string, unknown>): void;
+    info(message: string, context?: any): void;
+    warn(message: string, context?: any): void;
+    error(message: string, context?: any): void;
 }

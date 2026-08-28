@@ -102,4 +102,27 @@ export class ProcurementWorkflow {
             throw error;
         }
     }
+
+    public async syncSupplierStatus(tenantId: string, eventId: string) {
+        if (!await this.idempotency.claim(eventId, 'SYNC_SUPPLIER_STATUS')) {
+            this.logger.info('Supplier status sync skipped (idempotent)', { tenantId, eventId });
+            return;
+        }
+        try {
+            this.logger.info('Syncing supplier status', { tenantId, eventId });
+            const updates = await this.supplierDispatch.fetchStatusUpdates();
+            for (const update of updates) {
+                await this.purchaseOrders.updateStatus(tenantId, update.externalId, update.status);
+                await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_STATUS_UPDATED', entityId: eventId, payload: { purchaseOrderId: update.externalId, status: update.status }, occurredAt: new Date().toISOString() });
+            }
+            await this.idempotency.complete(eventId, 'SYNC_SUPPLIER_STATUS');
+            this.logger.info('Supplier status synced successfully', { tenantId, eventId, updatesCount: updates.length });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to sync supplier status', { tenantId, eventId, error: safeError });
+            await this.idempotency.fail(eventId, 'SYNC_SUPPLIER_STATUS');
+            await this.audit.append({ tenantId, type: 'SUPPLIER_STATUS_SYNC_FAILED', entityId: eventId, payload: { error: safeError }, occurredAt: new Date().toISOString() });
+            throw error;
+        }
+    }
 }
