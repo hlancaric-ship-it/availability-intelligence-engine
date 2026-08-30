@@ -30,43 +30,50 @@
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-section-label">DENNÍ OPERATIVA</div>
+                <div class="nav-section-label">OPERACE</div>
                 <button class="nav-item active" data-view="dashboard">
                     <span class="nav-icon">📊</span>
-                    <span class="nav-label">Přehled dne</span>
+                    <span class="nav-label">Přehled</span>
                 </button>
                 <button class="nav-item" data-view="orders">
                     <span class="nav-icon">📦</span>
-                    <span class="nav-label">Zákaznické objednávky</span>
+                    <span class="nav-label">Objednávky</span>
                     <span class="nav-badge" id="sidebar-orders-count">4</span>
                 </button>
+                <button class="nav-item" data-view="availability">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Dostupnost</span>
+                </button>
                 <button class="nav-item" data-view="procurement">
-                    <span class="nav-icon">🚚</span>
-                    <span class="nav-label">Nákupy u dodavatelů</span>
+                    <span class="nav-icon">🛒</span>
+                    <span class="nav-label">Nákup</span>
                     <span class="nav-badge warning-badge" id="sidebar-po-count">3</span>
                 </button>
                 <button class="nav-item" data-view="receiving">
                     <span class="nav-icon">📥</span>
                     <span class="nav-label">Příjem zboží</span>
                 </button>
-                <button class="nav-item nav-item-alert" data-view="exceptions">
-                    <span class="nav-icon">⚠️</span>
-                    <span class="nav-label">Výjimky & Ruční zásahy</span>
-                    <span class="nav-badge alert-count" id="sidebar-exceptions-count">2</span>
-                </button>
 
-                <div class="nav-section-label" style="margin-top: 10px;">SPRÁVA & NASTAVENÍ</div>
+                <div class="nav-section-label" style="margin-top: 10px;">NASTAVENÍ</div>
                 <button class="nav-item" data-view="suppliers">
                     <span class="nav-icon">🏢</span>
                     <span class="nav-label">Dodavatelé</span>
                 </button>
-                <button class="nav-item" data-view="products">
-                    <span class="nav-icon">🏷️</span>
-                    <span class="nav-label">Produkty & Mapování</span>
+                <button class="nav-item" data-view="feeds">
+                    <span class="nav-icon">📡</span>
+                    <span class="nav-label">Feedy</span>
                 </button>
-                <button class="nav-item" data-view="settings">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">Nastavení nákupu</span>
+                <button class="nav-item" data-view="carriers">
+                    <span class="nav-icon">🚚</span>
+                    <span class="nav-label">Dopravci</span>
+                </button>
+                <button class="nav-item" data-view="rules">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-label">Pravidla</span>
+                </button>
+                <button class="nav-item" data-view="audit">
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-label">Audit</span>
                 </button>
             </nav>
 
@@ -86,15 +93,15 @@
             <!-- Top App Bar -->
             <header class="top-bar">
                 <div class="top-bar-left">
-                    <span class="view-eyebrow" id="view-eyebrow">PŘEHLED DNE</span>
-                    <h1 class="view-title" id="view-title">Řízení nákupu a expedice</h1>
+                    <span class="view-eyebrow" id="view-eyebrow">PŘEHLED</span>
+                    <h1 class="view-title" id="view-title">Autonomní nákup & dostupnost</h1>
                 </div>
                 <div class="top-bar-actions">
                     <button class="btn-secondary" id="btn-reset-demo" title="Vrátí všechna data do původního stavu">
-                        ↺ Resetovat data
+                        ↺ Reset
                     </button>
-                    <button class="btn-action-red" id="btn-sim-cycle" title="Simuluje schválení, doručení a automatické spárování se zákazníky">
-                        ⚡ Spustit ukázkový scénář nákupu a příjmu
+                    <button class="btn-action-red" id="btn-sim-cycle" title="Simuluje nákup a příjem">
+                        ⚡ Demo scénář
                     </button>
                 </div>
             </header>
@@ -244,8 +251,8 @@
                     </div>
                 </section>
 
-                <!-- VIEW 2: EXCEPTIONS & MANUAL INTERVENTIONS -->
-                <section class="view-section" id="view-exceptions">
+                <!-- VIEW 2: AVAILABILITY -->
+                <section class="view-section" id="view-availability">
                     <div class="context-banner banner-danger">
                         <div class="context-grid">
                             <div class="context-col">
@@ -559,6 +566,114 @@
                                 ✓ Uložit nastavení nákupních pravidel
                             </button>
                         </div>
+                    </div>
+                </section>
+                <!-- VIEW 9: FEEDS -->
+                <section class="view-section" id="view-feeds">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Správa datových feedů od dodavatelů — aktuální zboží, ceny a dostupnost.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Přidejte nový feed od dodavatele a namapujte jeho pole na AIE systém.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">📡 Feedy dodavatelů</h2>
+                                <p class="section-card-subtitle">Přehled připojených datových zdrojů pro kontrolu zboží a cen:</p>
+                            </div>
+                            <button class="btn-action-red btn-sm" id="btn-add-feed-dialog">
+                                + Přidat nový feed
+                            </button>
+                        </div>
+                        <div id="feeds-list" style="padding: 20px; color: var(--text-muted);">Zatím nejsou připojeny žádné feedy. Klikněte na „+ Přidat nový feed" pro připojení dodavatele.</div>
+                    </div>
+                </section>
+
+                <!-- VIEW 10: CARRIERS -->
+                <section class="view-section" id="view-carriers">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Správa přepravních služeb a jejich vazby na objednávky.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Nastavte dopravce a jejich služby pro expedici objednávek.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">🚚 Dopravci</h2>
+                                <p class="section-card-subtitle">Připojené přepravní služby:</p>
+                            </div>
+                            <button class="btn-action-red btn-sm" id="btn-add-carrier-dialog">
+                                + Přidat dopravce
+                            </button>
+                        </div>
+                        <div id="carriers-list" style="padding: 20px; color: var(--text-muted);">Zatím nejsou připojeni žádní dopravci.</div>
+                    </div>
+                </section>
+
+                <!-- VIEW 11: RULES -->
+                <section class="view-section" id="view-rules">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Nastavení obchodních pravidel, podle kterých AIE autonomně rozhoduje.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Definujte pravidla pro výběr dodavatele, schválení nákupu a expedici.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">⚡ Pravidla</h2>
+                                <p class="section-card-subtitle">Automatizační pravidla pro nákup a řešení objednávek:</p>
+                            </div>
+                            <button class="btn-action-red btn-sm" id="btn-add-rule-dialog">
+                                + Přidat pravidlo
+                            </button>
+                        </div>
+                        <div id="rules-list" style="padding: 20px; color: var(--text-muted);">Zatím nejsou definována žádná pravidla.</div>
+                    </div>
+                </section>
+
+                <!-- VIEW 12: AUDIT TRAIL -->
+                <section class="view-section" id="view-audit">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Kompletní audit všech rozhodnutí AIE — co proběhlo, proč a kdy.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">📝 Kompletní audit</h2>
+                                <p class="section-card-subtitle">Všechny akce systému s časy a zdůvodněním:</p>
+                            </div>
+                        </div>
+                        <div id="audit-list" style="padding: 20px; color: var(--text-muted);">Audit se bude plnit s postupem akcí v systému.</div>
                     </div>
                 </section>
             </main>

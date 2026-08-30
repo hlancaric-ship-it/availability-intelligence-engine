@@ -1157,14 +1157,16 @@ function switchView(viewName) {
     if (targetSection) targetSection.classList.add('active');
 
     const titles = {
-        dashboard: { eyebrow: 'PŘEHLED DNE', title: 'Řízení nákupu a expedice' },
-        exceptions: { eyebrow: 'VÝJIMKY & RUČNÍ ZÁSAHY', title: 'Vyžaduje vaši akci' },
-        orders: { eyebrow: 'ZÁKAZNICKÉ OBJEDNÁVKY', title: 'Stav vyřízení a expedice' },
-        procurement: { eyebrow: 'NÁKUP', title: 'Nákupy u dodavatelů' },
-        receiving: { eyebrow: 'SKLAD', title: 'Příjem zboží & Naskladnění' },
-        suppliers: { eyebrow: 'SPRÁVA', title: 'Dodavatelé' },
-        products: { eyebrow: 'PRODUKTY', title: 'Produkty & Mapování na dodavatele' },
-        settings: { eyebrow: 'NASTAVENÍ', title: 'Pravidla automatického nákupu' },
+        dashboard: { eyebrow: 'PŘEHLED', title: 'Autonomní nákup & dostupnost' },
+        availability: { eyebrow: 'DOSTUPNOST', title: 'Analýza deficitů & Řešení' },
+        orders: { eyebrow: 'OBJEDNÁVKY', title: 'Stav a detail objednávek' },
+        procurement: { eyebrow: 'NÁKUP', title: 'Nákupní objednávky u dodavatelů' },
+        receiving: { eyebrow: 'PŘÍJEM', title: 'Příjem zboží & Naskladnění' },
+        suppliers: { eyebrow: 'DODAVATELÉ', title: 'Správa dodavatelů' },
+        feeds: { eyebrow: 'FEEDY', title: 'Datové feedy od dodavatelů' },
+        carriers: { eyebrow: 'DOPRAVCI', title: 'Přepravní služby' },
+        rules: { eyebrow: 'PRAVIDLA', title: 'Automatizační pravidla' },
+        audit: { eyebrow: 'AUDIT', title: 'Kompletní protokol systému' },
     };
 
     const t = titles[viewName] || titles.dashboard;
