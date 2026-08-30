@@ -1158,7 +1158,7 @@ function switchView(viewName) {
 
     const titles = {
         dashboard: { eyebrow: 'PŘEHLED', title: 'Autonomní nákup & dostupnost' },
-        availability: { eyebrow: 'DOSTUPNOST', title: 'Analýza deficitů & Řešení' },
+        availability: { eyebrow: 'DOSTUPNOST & DEFICIT', title: 'Analýza nedostatku zboží a navrhovaná řešení' },
         orders: { eyebrow: 'OBJEDNÁVKY', title: 'Stav a detail objednávek' },
         procurement: { eyebrow: 'NÁKUP', title: 'Nákupní objednávky u dodavatelů' },
         receiving: { eyebrow: 'PŘÍJEM', title: 'Příjem zboží & Naskladnění' },
@@ -1176,7 +1176,7 @@ function switchView(viewName) {
     // Trigger view-specific rendering
     if (viewName === 'products') renderProductsCatalog(state, '');
     if (viewName === 'suppliers') renderSuppliersManagement(state);
-    if (viewName === 'exceptions') renderAuditTrail(state);
+    if (viewName === 'availability') renderAuditTrail(state);
 }
 
 // ============================================================

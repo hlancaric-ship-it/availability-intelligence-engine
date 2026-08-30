@@ -251,48 +251,48 @@
                     </div>
                 </section>
 
-                <!-- VIEW 2: AVAILABILITY -->
-                <section class="view-section" id="view-availability">
-                    <div class="context-banner banner-danger">
-                        <div class="context-grid">
-                            <div class="context-col">
-                                <span class="context-label">📌 CO SE DĚJE</span>
-                                <p class="context-text">Přehled případů, kdy dodavatel nemá skladem poptávané kusy nebo balík obsahoval jiný počet kusů než faktura.</p>
+                <!-- VIEW 2: AVAILABILITY / DEFICIT ANALYSIS -->
+                <section class=”view-section” id=”view-availability”>
+                    <div class=”context-banner banner-danger”>
+                        <div class=”context-grid”>
+                            <div class=”context-col”>
+                                <span class=”context-label”>📌 CO SE DĚJE</span>
+                                <p class=”context-text”>Analýza deficitů skladem a navrhovaná řešení. Systém ukazuje, které objednávky mají problém s dostupností.</p>
                             </div>
-                            <div class="context-col">
-                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
-                                <p class="context-text">Systém nechce dělat riskantní rozhodnutí naslepo a nabízí vám nejlepší varianty řešení.</p>
+                            <div class=”context-col”>
+                                <span class=”context-label”>👁️ PROČ TO VIDÍTE</span>
+                                <p class=”context-text”>Abyste měli přehled o situacích, kde chybí zboží nebo se musí objednat u dodavatele.</p>
                             </div>
-                            <div class="context-col">
-                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
-                                <p class="context-text">Klikněte na „Zvolit náhradního dodavatele“, „Rozdělit nákup“ nebo upravte množství ručně.</p>
+                            <div class=”context-col”>
+                                <span class=”context-label”>👉 CO MÁTE UDĚLAT</span>
+                                <p class=”context-text”>Ověřte, že AIE vybral správného dodavatele, nebo intervenujte — vyberte jiného partnera či upravte množství.</p>
                             </div>
-                            <div class="context-col">
-                                <span class="context-label">⚡ CO SE STANE POTOM</span>
-                                <p class="context-text">Systém přepočítá nákup, vytvoří novou objednávku u náhradníka a výjimku označí za vyřešenou.</p>
+                            <div class=”context-col”>
+                                <span class=”context-label”>⚡ CO SE STANE POTOM</span>
+                                <p class=”context-text”>Systém přepočítá nákup podle vašeho rozhodnutí a položka se přesune k čekajícím na dodání.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-card" style="margin-bottom: 24px;">
-                        <div class="section-card-header">
+                    <div class=”section-card” style=”margin-bottom: 24px;”>
+                        <div class=”section-card-header”>
                             <div>
-                                <h2 class="section-card-title text-danger">⚠️ Aktivní výjimky čekající na vyřešení</h2>
-                                <p class="section-card-subtitle">Každá výjimka obsahuje jasné vysvětlení problému, příčinu a konkrétní návrh řešení:</p>
+                                <h2 class=”section-card-title text-danger”>⚠️ Objednávky s deficity (vyžadují řešení)</h2>
+                                <p class=”section-card-subtitle”>Každá položka ukazuje, co chybí, proč je to potřeba objednat a co AIE navrhuje:</p>
                             </div>
                         </div>
-                        <div id="full-exceptions-list" class="exceptions-full-list"></div>
+                        <div id=”full-exceptions-list” class=”exceptions-full-list”></div>
                     </div>
 
-                    <!-- Audit log of manual interventions -->
-                    <div class="section-card">
-                        <div class="section-card-header">
+                    <!-- Audit log of system decisions -->
+                    <div class=”section-card”>
+                        <div class=”section-card-header”>
                             <div>
-                                <h2 class="section-card-title">📝 Historie ručních zásahů a změn (Audit Trail)</h2>
-                                <p class="section-card-subtitle">Přesný přehled o tom, co systém navrhl a jak to uživatel ručně změnil (včetně důvodu a času):</p>
+                                <h2 class=”section-card-title”>📝 Rozhodovací řetězec (Audit Trail)</h2>
+                                <p class=”section-card-subtitle”>Co systém detekoval, jak vyhodnotil dodavatele a jaké rozhodnutí provedl:</p>
                             </div>
                         </div>
-                        <div id="interventions-audit-list"></div>
+                        <div id=”interventions-audit-list”></div>
                     </div>
                 </section>
 
