@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIE — Autonomní Nákup & Sklad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">AIE</h1>
+                <p class="sidebar-subtitle">Procurement Engine</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="overview">
+                    <span class="nav-icon">📊</span>
+                    <span>Přehled</span>
+                </button>
+                <button class="nav-item" data-section="orders">
+                    <span class="nav-icon">📦</span>
+                    <span>Objednávky</span>
+                    <span class="badge" id="badge-orders">4</span>
+                </button>
+                <button class="nav-item" data-section="availability">
+                    <span class="nav-icon">📈</span>
+                    <span>Dostupnost</span>
+                </button>
+                <button class="nav-item" data-section="procurement">
+                    <span class="nav-icon">🛒</span>
+                    <span>Nákup</span>
+                    <span class="badge warning" id="badge-procurement">3</span>
+                </button>
+                <button class="nav-item" data-section="suppliers">
+                    <span class="nav-icon">🏢</span>
+                    <span>Dodavatelé</span>
+                </button>
+                <button class="nav-item" data-section="feeds">
+                    <span class="nav-icon">📡</span>
+                    <span>Feedy</span>
+                </button>
+                <button class="nav-item" data-section="carriers">
+                    <span class="nav-icon">🚚</span>
+                    <span>Dopravci</span>
+                </button>
+                <button class="nav-item" data-section="rules">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Pravidla</span>
+                </button>
+                <button class="nav-item" data-section="audit">
+                    <span class="nav-icon">📝</span>
+                    <span>Audit</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p class="text-tiny">Demo: Mock data</p>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h2 class="header-title" id="section-title">Přehled</h2>
+                    <p class="header-subtitle" id="section-desc">Aktuální stav objednávek a zásob</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary" id="btn-refresh">↻ Obnovit</button>
+                </div>
+            </header>
+
+            <!-- Sections -->
+            <div class="content">
+                <!-- OVERVIEW -->
+                <section id="sec-overview" class="section active">
+                    <div class="grid-2">
+                        <div class="card">
+                            <h3>Stav objednávek</h3>
+                            <div class="stat-large">
+                                <div class="stat-value" id="stat-total-orders">12</div>
+                                <div class="stat-label">Celkem objednávek</div>
+                            </div>
+                            <div class="stat-rows">
+                                <div class="stat-row">
+                                    <span>Připraveno k expedici</span>
+                                    <strong id="stat-ready">3</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Čeká na zboží</span>
+                                    <strong id="stat-waiting" style="color: #d97706">4</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Částečně dostupné</span>
+                                    <strong id="stat-partial" style="color: #f59e0b">2</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Nákupní aktivita</h3>
+                            <div class="stat-large">
+                                <div class="stat-value" id="stat-total-po">7</div>
+                                <div class="stat-label">Nákupních objednávek</div>
+                            </div>
+                            <div class="stat-rows">
+                                <div class="stat-row">
+                                    <span>Čeká na schválení</span>
+                                    <strong id="stat-po-pending" style="color: #f59e0b">3</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Poslané dodavatelům</span>
+                                    <strong id="stat-po-sent" style="color: #3b82f6">2</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Přijaté</span>
+                                    <strong id="stat-po-received" style="color: #10b981">2</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Kritické situace</h3>
+                        <div id="critical-list" class="alert-list"></div>
+                    </div>
+                </section>
+
+                <!-- ORDERS -->
+                <section id="sec-orders" class="section">
+                    <div class="card">
+                        <h3>Zákaznické objednávky</h3>
+                        <div class="table-wrapper">
+                            <table id="orders-table" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Objednávka</th>
+                                        <th>Zákazník</th>
+                                        <th>Položky</th>
+                                        <th>Stav</th>
+                                        <th>Deficit</th>
+                                        <th>Akce</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="order-detail" class="card hidden">
+                        <h3>Detail objednávky</h3>
+                        <div id="order-detail-content"></div>
+                    </div>
+                </section>
+
+                <!-- AVAILABILITY -->
+                <section id="sec-availability" class="section">
+                    <div class="grid-2">
+                        <div class="card">
+                            <h3>Sklad (vlastní)</h3>
+                            <div id="own-stock" class="stock-list"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Dostupnost u dodavatelů</h3>
+                            <div id="supplier-stock" class="stock-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PROCUREMENT -->
+                <section id="sec-procurement" class="section">
+                    <div class="card">
+                        <h3>Nákupní objednávky</h3>
+                        <div class="procurement-filters">
+                            <button class="filter-btn active" data-filter="all">Všechny</button>
+                            <button class="filter-btn" data-filter="PENDING_APPROVAL">Schval. <span class="badge-small" id="filter-pending">3</span></button>
+                            <button class="filter-btn" data-filter="SENT">Poslané</button>
+                            <button class="filter-btn" data-filter="RECEIVED">Přijaté</button>
+                        </div>
+                        <div id="procurement-list" class="procurement-list"></div>
+                    </div>
+                </section>
+
+                <!-- SUPPLIERS -->
+                <section id="sec-suppliers" class="section">
+                    <div class="card">
+                        <h3>Dodavatelé</h3>
+                        <div id="suppliers-list" class="suppliers-list"></div>
+                    </div>
+                </section>
+
+                <!-- FEEDS -->
+                <section id="sec-feeds" class="section">
+                    <div class="card">
+                        <h3>Feedy zdrojů</h3>
+                        <p class="text-muted">Konfigurace zdrojů dostupnosti a nabídek dodavatelů</p>
+                        <div id="feeds-list" class="feeds-list"></div>
+                    </div>
+                </section>
+
+                <!-- CARRIERS -->
+                <section id="sec-carriers" class="section">
+                    <div class="card">
+                        <h3>Dopravci</h3>
+                        <p class="text-muted">Přepravní služby a jejich dostupnost</p>
+                        <div id="carriers-list" class="carriers-list"></div>
+                    </div>
+                </section>
+
+                <!-- RULES -->
+                <section id="sec-rules" class="section">
+                    <div class="grid-2">
+                        <div class="card">
+                            <h3>Strategie nákupu</h3>
+                            <div class="rules-form">
+                                <label>
+                                    <input type="radio" name="strategy" value="PRICE" checked>
+                                    Nejnižší cena
+                                </label>
+                                <label>
+                                    <input type="radio" name="strategy" value="SPEED">
+                                    Nejrychlejší dodání
+                                </label>
+                                <label>
+                                    <input type="radio" name="strategy" value="BALANCED">
+                                    Vyvážená
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>Pravidla schvalování</h3>
+                            <div class="rules-form">
+                                <label>
+                                    <input type="checkbox" checked>
+                                    Vyžadovat ruční schválení nákupu
+                                </label>
+                                <label>
+                                    <input type="checkbox" checked>
+                                    Povolit rozdělení mezi dodavatele
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AUDIT -->
+                <section id="sec-audit" class="section">
+                    <div class="card">
+                        <h3>Audit trail</h3>
+                        <div class="audit-filters">
+                            <input type="text" placeholder="Hledat..." id="audit-search" class="input-text">
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Čas</th>
+                                    <th>Typ</th>
+                                    <th>Entita</th>
+                                    <th>Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-list"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
