@@ -21,13 +21,13 @@ const InitialState = {
     customerOrders: [
         {
             orderId: 'OBJ-2026-001245',
-            customerName: 'Jan Novák (cistytriko.cz)',
+            customerName: 'Jan Novák',
             status: 'READY_TO_FULFILL',
             createdAt: 'Dnes, 10:30',
             estimatedShipDate: 'Dnes do 17:00 (ihned k expedici)',
             items: [
-                { sku: 'TRIKO-BASIC-BLK-M', productName: 'Čistý triko Basic Černé (vel. M)', required: 2, stock: 2, incoming: 0, received: 2, waiting: 0, allocated: 2 },
-                { sku: 'TRIKO-HEAVY-WHT-L', productName: 'Čistý triko Heavy Bílé (vel. L)', required: 1, stock: 1, incoming: 0, received: 1, waiting: 0, allocated: 1 },
+                { sku: 'TRIKO-BASIC-BLK-M', productName: 'Triko Basic Černé (vel. M)', required: 2, stock: 2, incoming: 0, received: 2, waiting: 0, allocated: 2 },
+                { sku: 'TRIKO-HEAVY-WHT-L', productName: 'Triko Heavy Bílé (vel. L)', required: 1, stock: 1, incoming: 0, received: 1, waiting: 0, allocated: 1 },
             ],
             procurement: [
                 { poId: 'NÁKUP-2026-08-001', supplier: 'Fox Outdoor', quantity: 2, eta: '29. srpna (zítra)', status: 'Doručeno a naskladněno' },
@@ -41,7 +41,7 @@ const InitialState = {
         },
         {
             orderId: 'OBJ-2026-001246',
-            customerName: 'Petra Dvořáková (ZP Florence)',
+            customerName: 'Petra Dvořáková',
             status: 'WAITING_FOR_STOCK',
             createdAt: 'Dnes, 12:00',
             estimatedShipDate: '30. srpna (po doručení od dodavatelů)',
@@ -64,7 +64,7 @@ const InitialState = {
         },
         {
             orderId: 'OBJ-2026-001247',
-            customerName: 'Karel Vlček (cistytriko.cz)',
+            customerName: 'Karel Vlček',
             status: 'READY_TO_SHIP',
             createdAt: 'Dnes, 09:10',
             estimatedShipDate: 'Dnes do 17:00 (ihned k expedici)',
@@ -81,7 +81,7 @@ const InitialState = {
         },
         {
             orderId: 'OBJ-2026-001248',
-            customerName: 'Martina Malá (ZP Florence)',
+            customerName: 'Martina Malá',
             status: 'READY_TO_SHIP',
             createdAt: 'Dnes, 15:00',
             estimatedShipDate: 'Dnes do 17:00 (ihned k expedici)',
@@ -102,7 +102,7 @@ const InitialState = {
             status: 'PENDING_APPROVAL',
             itemsCount: 4,
             totalPcs: 12,
-            targetOrders: 'OBJ-2026-001245 (Jan Novák) a další 2 zákazníci',
+            targetOrders: 'OBJ-2026-001245 a 2 další objednávky',
             eta: '29. srpna (zítra)',
             note: 'Doplnění chybějících černých triček velikosti M a L',
             reason: 'Vybrán hlavní dodavatel s nejnižší cenou a dodáním do 24 hodin.',
@@ -113,7 +113,7 @@ const InitialState = {
             status: 'PENDING_APPROVAL',
             itemsCount: 1,
             totalPcs: 4,
-            targetOrders: 'OBJ-2026-001246 (Petra Dvořáková - část A)',
+            targetOrders: 'OBJ-2026-001246 (část A)',
             eta: '30. srpna',
             note: 'Elastická obinadla 10cm (4 ks)',
             reason: 'Objednána maximální dostupná zásoba u hlavního dodavatele (4 ks).',
@@ -124,7 +124,7 @@ const InitialState = {
             status: 'PENDING_APPROVAL',
             itemsCount: 1,
             totalPcs: 2,
-            targetOrders: 'OBJ-2026-001246 (Petra Dvořáková - část B)',
+            targetOrders: 'OBJ-2026-001246 (část B)',
             eta: '30. srpna',
             note: 'Elastická obinadla 10cm (2 ks - rozdělení nákupu)',
             reason: 'Záložní partner vybrán pro doobjednání zbývajících 2 ks.',
