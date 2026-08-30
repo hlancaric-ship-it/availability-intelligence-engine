@@ -1,0 +1,21 @@
+{
+  "name": "availability-intelligence-engine",
+  "version": "1.0.0",
+  "description": "Platform-agnostic procurement orchestration core",
+  "scripts": {
+    "dev": "tsx scripts/dev-server.ts",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

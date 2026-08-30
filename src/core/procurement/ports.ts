@@ -14,7 +14,10 @@ export interface PurchaseOrderPort {
     recordReceipt(receipt: any[]): Promise<void>;
     getOrdersByIds(tenantId: string, orderIds: string[]): Promise<PurchaseOrder[]>;
     cancel(tenantId: string, orderId: string): Promise<void>;
+    approve(tenantId: string, orderId: string): Promise<void>;
     updateStatus(tenantId: string, orderId: string, status: 'ACCEPTED' | 'SHIPPED' | 'CANCELLED'): Promise<void>;
+    updateLineQuantity?(tenantId: string, lineId: string, newQuantity: number): Promise<void>;
+    overrideSupplier?(tenantId: string, orderId: string, newSupplierId: string): Promise<void>;
 }
 
 export interface SupplierDispatchPort {
@@ -24,6 +27,7 @@ export interface SupplierDispatchPort {
 
 export interface FulfillmentReadinessPort {
     markReadyToShip(allocations: any[]): Promise<void>;
+    reallocate?(tenantId: string, customerOrderLineId: string, newQuantity: number): Promise<void>;
 }
 
 export interface IdempotencyPort {

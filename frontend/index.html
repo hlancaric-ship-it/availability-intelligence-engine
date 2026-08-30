@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-Code Nexus &ndash; Autonomní nákup &amp; sklad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-badge-red">NEXUS</div>
+                <div class="brand-text">
+                    <span class="brand-title">L-Code Nexus</span>
+                    <span class="brand-subtitle">Autonomní nákup &amp; sklad</span>
+                </div>
+            </div>
+
+            <div class="tenant-card">
+                <div class="tenant-indicator">
+                    <span class="tenant-dot"></span>
+                    <span class="tenant-name">Čistý triko / ZP Florence</span>
+                </div>
+                <span class="sandbox-pill">🔒 100% Sandbox mód</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">DENNÍ OPERATIVA</div>
+                <button class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Přehled dne</span>
+                </button>
+                <button class="nav-item" data-view="orders">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-label">Zákaznické objednávky</span>
+                    <span class="nav-badge" id="sidebar-orders-count">4</span>
+                </button>
+                <button class="nav-item" data-view="procurement">
+                    <span class="nav-icon">🚚</span>
+                    <span class="nav-label">Nákupy u dodavatelů</span>
+                    <span class="nav-badge warning-badge" id="sidebar-po-count">3</span>
+                </button>
+                <button class="nav-item" data-view="receiving">
+                    <span class="nav-icon">📥</span>
+                    <span class="nav-label">Příjem zboží</span>
+                </button>
+                <button class="nav-item nav-item-alert" data-view="exceptions">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-label">Výjimky & Ruční zásahy</span>
+                    <span class="nav-badge alert-count" id="sidebar-exceptions-count">2</span>
+                </button>
+
+                <div class="nav-section-label" style="margin-top: 10px;">SPRÁVA & NASTAVENÍ</div>
+                <button class="nav-item" data-view="suppliers">
+                    <span class="nav-icon">🏢</span>
+                    <span class="nav-label">Dodavatelé</span>
+                </button>
+                <button class="nav-item" data-view="products">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-label">Produkty & Mapování</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Nastavení nákupu</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-guide-box">
+                    <div class="guide-box-header">
+                        <span>💡 Průvodce nového e-shopaře</span>
+                    </div>
+                    <p class="guide-box-desc">Jak nastavit dodavatele, propojit varianty a řídit automatické nákupy krok za krokem.</p>
+                    <button class="btn-guide-toggle" id="btn-guide-toggle">Zobrazit rychlého průvodce</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <!-- Top App Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <span class="view-eyebrow" id="view-eyebrow">PŘEHLED DNE</span>
+                    <h1 class="view-title" id="view-title">Řízení nákupu a expedice</h1>
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn-secondary" id="btn-reset-demo" title="Vrátí všechna data do původního stavu">
+                        ↺ Resetovat data
+                    </button>
+                    <button class="btn-action-red" id="btn-sim-cycle" title="Simuluje schválení, doručení a automatické spárování se zákazníky">
+                        ⚡ Spustit ukázkový scénář nákupu a příjmu
+                    </button>
+                </div>
+            </header>
+
+            <main class="main-viewport">
+                <!-- New User Setup Onboarding Modal / Banner -->
+                <div class="workflow-guide-card hidden" id="workflow-guide-panel">
+                    <div class="guide-header">
+                        <div>
+                            <span class="guide-badge">PRŮVODCE PRO NOVÉHO E-SHOPAŘE</span>
+                            <h2 class="guide-title">5 jednoduchých kroků k plně automatickému nákupu</h2>
+                            <p class="guide-subtitle">Nastavte systém během několika minut a nechte ho automaticky hlídat sklad a sestavovat nákupy:</p>
+                        </div>
+                        <button class="btn-close-guide" id="btn-close-guide" title="Zavřít průvodce">&times;</button>
+                    </div>
+                    <div class="workflow-steps">
+                        <div class="step-card">
+                            <div class="step-badge">1</div>
+                            <div class="step-info">
+                                <span class="step-title">Přidejte dodavatele</span>
+                                <span class="step-desc"><b>Co dělám:</b> Zadáte název, kontakt a dodací lhůtu.<br><b>Proč:</b> Systém ví, u koho může objednávat.</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">&rarr;</div>
+                        <div class="step-card">
+                            <div class="step-badge">2</div>
+                            <div class="step-info">
+                                <span class="step-title">Nastavte způsob nákupu</span>
+                                <span class="step-desc"><b>Co dělám:</b> Zvolíte e-mail, B2B portál nebo objednávkový formulář.</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">&rarr;</div>
+                        <div class="step-card">
+                            <div class="step-badge">3</div>
+                            <div class="step-info">
+                                <span class="step-title">Propojte produkty & varianty</span>
+                                <span class="step-desc"><b>Co dělám:</b> Přiřadíte konkrétní velikosti k dodavatelským kódům (i více dodavatelů k 1 produktu).</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">&rarr;</div>
+                        <div class="step-card">
+                            <div class="step-badge">4</div>
+                            <div class="step-info">
+                                <span class="step-title">Nastavte priority</span>
+                                <span class="step-desc"><b>Co dělám:</b> Určíte, kdo je hlavní a kdo záložní partner při výpadku skladu.</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">&rarr;</div>
+                        <div class="step-card step-ready">
+                            <div class="step-badge badge-ready">5</div>
+                            <div class="step-info">
+                                <span class="step-title">Spusťte automatiku</span>
+                                <span class="step-desc"><b>Co se stane:</b> Systém sám kontroluje objednávky ze Shoptetu a navrhuje nákupy.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 1: DASHBOARD -->
+                <section class="view-section active" id="view-dashboard">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE PRÁVĚ DĚJE</span>
+                                <p class="context-text">Systém zkontroloval dnešní objednávky ze Shoptetu a zjistil chybějící položky na skladě. Automaticky navrhl nákup u dodavatelů.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Toto je vaše denní operační centrum: okamžitě víte, co můžete zabalit a kde je potřeba vaše potvrzení.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">1. Schvalte nákupy u dodavatelů ve sloupci 1.<br>2. Objednávky ze sloupce 3 můžete rovnou zabalit a odeslat.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Po schválení systém rozešle nákupy dodavatelům. Jakmile zboží dorazí, samo se přiřadí ke konkrétním zákazníkům.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card kpi-card-warning clickable-kpi" data-target-view="procurement">
+                            <div class="kpi-top">
+                                <span class="kpi-label">Nákupy u dodavatelů k potvrzení</span>
+                                <span class="kpi-pill pill-warning">Vyžaduje akci</span>
+                            </div>
+                            <div class="kpi-value text-warning" id="kpi-pending-val">3</div>
+                            <p class="kpi-desc">Systém je automaticky sestavil podle dostupnosti zboží. Po vašem potvrzení budou odeslány dodavatelům.</p>
+                            <span class="kpi-link-hint">Přejít ke schválení &rarr;</span>
+                        </div>
+
+                        <div class="kpi-card kpi-card-danger clickable-kpi" data-target-view="exceptions">
+                            <div class="kpi-top">
+                                <span class="kpi-label">Výjimky & ruční zásahy</span>
+                                <span class="kpi-pill pill-danger" id="kpi-alert-badge">Ke kontrole</span>
+                            </div>
+                            <div class="kpi-value text-danger" id="kpi-exceptions-val">2</div>
+                            <p class="kpi-desc">Případy, kdy dodavatel nemá skladem potřebné kusy nebo vznikla neshoda v dodaném množství.</p>
+                            <span class="kpi-link-hint text-danger">Vyřešit výjimky &rarr;</span>
+                        </div>
+
+                        <div class="kpi-card kpi-card-success clickable-kpi" data-target-view="orders">
+                            <div class="kpi-top">
+                                <span class="kpi-label">Objednávky připravené k zabalení</span>
+                                <span class="kpi-pill pill-success">Expedice</span>
+                            </div>
+                            <div class="kpi-value text-success" id="kpi-ready-val">3</div>
+                            <p class="kpi-desc">Veškeré zboží je 100% skladem a spárováno. Můžete vytisknout štítky a zabalit balíky.</p>
+                            <span class="kpi-link-hint text-success">Otevřít seznam k expedici &rarr;</span>
+                        </div>
+                    </div>
+
+                    <div class="columns-grid">
+                        <article class="board-column">
+                            <div class="column-head">
+                                <div class="column-title-row">
+                                    <h2 class="column-title">1. Čeká na schválení nákupu</h2>
+                                    <span class="column-count" id="pending-count">3</span>
+                                </div>
+                                <p class="column-subtext">Systém sestavil optimální nákup u dodavatelů. Schvalte odeslání.</p>
+                            </div>
+                            <div id="pending-list" class="cards-stack"></div>
+                        </article>
+
+                        <article class="board-column">
+                            <div class="column-head">
+                                <div class="column-title-row">
+                                    <h2 class="column-title text-danger">2. Vyžaduje vaši akci (Výjimky)</h2>
+                                    <span class="column-count count-danger" id="exceptions-count">2</span>
+                                </div>
+                                <p class="column-subtext">Chybějící nabídky nebo nesrovnalosti vyžadující rozhodnutí e-shopaře.</p>
+                            </div>
+                            <div id="exceptions-list" class="cards-stack"></div>
+                        </article>
+
+                        <article class="board-column">
+                            <div class="column-head">
+                                <div class="column-title-row">
+                                    <h2 class="column-title text-success">3. Připraveno k zabalení</h2>
+                                    <span class="column-count count-success" id="ready-count">3</span>
+                                </div>
+                                <p class="column-subtext">Zboží je kompletně připraveno. Kliknutím zobrazíte detail a můžete balit.</p>
+                            </div>
+                            <div id="ready-list" class="cards-stack"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: EXCEPTIONS & MANUAL INTERVENTIONS -->
+                <section class="view-section" id="view-exceptions">
+                    <div class="context-banner banner-danger">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Přehled případů, kdy dodavatel nemá skladem poptávané kusy nebo balík obsahoval jiný počet kusů než faktura.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Systém nechce dělat riskantní rozhodnutí naslepo a nabízí vám nejlepší varianty řešení.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Klikněte na „Zvolit náhradního dodavatele“, „Rozdělit nákup“ nebo upravte množství ručně.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Systém přepočítá nákup, vytvoří novou objednávku u náhradníka a výjimku označí za vyřešenou.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card" style="margin-bottom: 24px;">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title text-danger">⚠️ Aktivní výjimky čekající na vyřešení</h2>
+                                <p class="section-card-subtitle">Každá výjimka obsahuje jasné vysvětlení problému, příčinu a konkrétní návrh řešení:</p>
+                            </div>
+                        </div>
+                        <div id="full-exceptions-list" class="exceptions-full-list"></div>
+                    </div>
+
+                    <!-- Audit log of manual interventions -->
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">📝 Historie ručních zásahů a změn (Audit Trail)</h2>
+                                <p class="section-card-subtitle">Přesný přehled o tom, co systém navrhl a jak to uživatel ručně změnil (včetně důvodu a času):</p>
+                            </div>
+                        </div>
+                        <div id="interventions-audit-list"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: CUSTOMER ORDERS -->
+                <section class="view-section" id="view-orders">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Přehled všech zákaznických objednávek ze Shoptetu a stavu jejich naskladnění a přiřazení.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Abyste měli 100% přehled o tom, které objednávky již můžete expedovat a na které zboží ještě čekáte.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Klikněte na kteroukoli objednávku pro otevření jejího příběhu, stavu položek a možností ruční úpravy.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">U kompletních objednávek můžete ihned expedovat. U čekajících systém zboží přiřadí okamžitě po doručení.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">📦 Zákaznické objednávky & stav expedice</h2>
+                                <p class="section-card-subtitle">Kliknutím na řádek otevřete detailní příběh a možnosti ručních úprav.</p>
+                            </div>
+                        </div>
+                        <div id="full-orders-list" class="orders-table-wrapper"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: PURCHASE ORDERS -->
+                <section class="view-section" id="view-procurement">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Seznam nákupních objednávek u dodavatelů sestavených systémem pro pokrytí deficitu skladu.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Máte plnou kontrolu nad tím, komu a v jakém objemu se objednává zboží před jeho odesláním.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Klikněte na „✓ Schválit nákup u dodavatele“ u objednávek, které chcete potvrdit.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Podklady se odešlou dodavateli a nákup se přesune do sekce Příjem zboží, kde čeká na naskladnění.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">🚚 Nákupní objednávky u dodavatelů</h2>
+                                <p class="section-card-subtitle">Přehled vygenerovaných nákupů, termínů doručení a stavu schválení.</p>
+                            </div>
+                        </div>
+                        <div id="full-po-list" class="po-grid"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: GOODS RECEIPT -->
+                <section class="view-section" id="view-receiving">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Doručovací zásilky od dodavatelů, které jsou na cestě nebo právě dorazily na váš sklad.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Zde potvrzujete fyzické převzetí balíků a kontrolu proti dodacímu listu.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Po převzetí balíku klikněte na „📥 Potvrdit příjem balíku & Automaticky přiřadit k objednávkám“.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Systém naskladní kusy, ihned je přiřadí k čekajícím zákazníkům a přepne objednávky na „Připraveno k vyřízení“.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">📥 Příjem zboží na sklad & Kontrola zásilek</h2>
+                                <p class="section-card-subtitle">Porovnání objednaného, skutečně přijatého a zbývajícího množství s automatickým přiřazením k zákazníkům.</p>
+                            </div>
+                        </div>
+                        <div id="receiving-list" class="receiving-grid"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: SUPPLIERS MANAGEMENT -->
+                <section class="view-section" id="view-suppliers">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Správa integrovaných dodavatelů, jejich priorit, dodacích lhůt a způsobů objednávání.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Zde určujete, od koho má systém zboží poptávat a jakým způsobem se mu nákupní podklady předávají.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Můžete přidat nového dodavatele, upravit prioritu partnera nebo změnit způsob objednání.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Systém při výpočtu nákupu automaticky upřednostňuje partnery s nejvyšší prioritou a nejrychlejším dodáním.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">🏢 Správa dodavatelů</h2>
+                                <p class="section-card-subtitle">Přehled partnerských velkoobchodů, stavů nabídek a nákupních podmínek:</p>
+                            </div>
+                            <button class="btn-action-red btn-sm" id="btn-add-supplier-dialog">
+                                + Přidat nového dodavatele
+                            </button>
+                        </div>
+                        <div id="suppliers-list" class="suppliers-grid"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 7: PRODUCTS & VARIANT MAPPING CENTER -->
+                <section class="view-section" id="view-products">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Centrální správa produktů, variant (barvy/velikosti) a jejich propojení na konkrétní dodavatele.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Zde určujete: „Tento produkt mohu nakoupit u Dodavatele A i Dodavatele B pod těmito dodavatelskými kódy.“</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Vyhledejte produkt a propojte jeho varianty s dodavateli nebo upravte nákupní ceny a dodavatelské kódy.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Pokud zboží chybí na skladě, systém přesně ví, jaký dodavatelský kód má u kterého partnera objednat.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header" style="flex-direction: column; align-items: stretch; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="section-card-title">🏷️ Produkty & Mapování na dodavatele</h2>
+                                    <p class="section-card-subtitle">Vyhledávání produktů podle názvu, e-shopového kódu nebo dodavatelského kódu (SKU):</p>
+                                </div>
+                                <button class="btn-action-red btn-sm" id="btn-add-mapping-dialog">
+                                    + Propojit produkt s dodavatelem
+                                </button>
+                            </div>
+
+                            <!-- Search bar -->
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="product-search-input" placeholder="🔍 Hledat produkt podle názvu, kódu (TRIKO-BASIC-BLK-M) nebo kódu dodavatele (FOX-TSHIRT)..." style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px;">
+                                <button class="btn-secondary" id="btn-clear-search">Zrušit filtr</button>
+                            </div>
+                        </div>
+
+                        <div id="products-catalog-list"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 8: PROCUREMENT SETTINGS -->
+                <section class="view-section" id="view-settings">
+                    <div class="context-banner">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Nastavení obchodních pravidel a strategií, podle kterých systém autonomně rozhoduje o nákupech.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Máte plnou kontrolu nad chováním nákupního algoritmu: jak preferovat partnery a co dělat při výpadku skladu.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Zvolte preferovanou strategii nákupu, limity pro schvalování a uložte pravidla.</p>
+                            </div>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Systém okamžitě aplikuje tato pravidla na všechny nově příchozí objednávky z e-shopu.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <div>
+                                <h2 class="section-card-title">⚙️ Pravidla a strategie automatického nákupu</h2>
+                                <p class="section-card-subtitle">Každé pravidlo jasně vysvětluje, jak ovlivňuje výběr dodavatelů a nákupní objednávky:</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 20px;" id="settings-form-wrapper">
+                            <div style="background: var(--bg-subtle); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h3 style="font-size: 15px; margin-bottom: 4px;">1. Hlavní nákupní strategie</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"><b>Co toto nastavení ovlivňuje:</b> Určuje kritérium, podle kterého systém vybírá nejvýhodnějšího dodavatele.</p>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                        <input type="radio" name="procurementStrategy" value="SPLIT_BALANCED" checked style="margin-top: 3px;">
+                                        <div>
+                                            <b>Vyvážená strategie (Doporučeno)</b>
+                                            <p style="font-size: 12px; color: var(--text-muted);">Upřednostňuje hlavního dodavatele s nejnižší cenou. Pokud nemá dostatek kusů, automaticky rozdělí nákup na záložního partnera.</p>
+                                        </div>
+                                    </label>
+                                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                        <input type="radio" name="procurementStrategy" value="FASTEST" style="margin-top: 3px;">
+                                        <div>
+                                            <b>Nejrychlejší doručení</b>
+                                            <p style="font-size: 12px; color: var(--text-muted);">Vybírá dodavatele s nejkratší dodací lhůtou bez ohledu na drobný cenový rozdíl.</p>
+                                        </div>
+                                    </label>
+                                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                        <input type="radio" name="procurementStrategy" value="CHEAPEST" style="margin-top: 3px;">
+                                        <div>
+                                            <b>Nejnižší nákupní cena</b>
+                                            <p style="font-size: 12px; color: var(--text-muted);">Maximalizuje obchodní marži výběrem nejlevnější velkoobchodní nabídky.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-subtle); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h3 style="font-size: 15px; margin-bottom: 4px;">2. Rozdělení nákupu mezi více dodavatelů (Multi-Supplier Split)</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"><b>Co toto nastavení ovlivňuje:</b> Co dělat, když žádný jednotlivý partner nemá celé požadované množství.</p>
+                                
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" id="setting-allow-split" checked>
+                                    <span><b>Povolit automatické rozdělení nákupu mezi více partnerů</b> (pokud hlavní dodavatel nemá skladem všechny kusy, doobjedná zbytek u záložního partnera)</span>
+                                </label>
+                            </div>
+
+                            <div style="background: var(--bg-subtle); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h3 style="font-size: 15px; margin-bottom: 4px;">3. Schvalovací proces nákupů</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"><b>Co toto nastavení ovlivňuje:</b> Zda má systém vyžadovat vaše ruční potvrzení před odesláním podkladů dodavateli.</p>
+                                
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" id="setting-require-approval" checked>
+                                    <span><b>Vždy vyžadovat ruční schválení e-shopařem před odesláním nákupu</b></span>
+                                </label>
+                            </div>
+
+                            <button class="btn-action-red" style="align-self: flex-start;" id="btn-save-settings">
+                                ✓ Uložit nastavení nákupních pravidel
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Interactive Order Detail Modal ("Příběh objednávky") -->
+    <div id="order-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-eyebrow">PŘÍBĚH A DETAIL OBJEDNÁVKY</span>
+                    <h3 class="modal-title" id="modal-order-title">Objednávka č. —</h3>
+                </div>
+                <button class="modal-close" id="modal-close-btn" title="Zavřít okno">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-notification" class="toast-notification"></div>
+
+    <script type="module" src="./dashboard.js"></script>
+</body>
+</html>
+
+

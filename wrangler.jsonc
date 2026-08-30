@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "availability-dashboard",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-30",
+  "assets": {
+    "directory": "./frontend",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "l-code-dynamics.com/availability*",
+      "zone_name": "l-code-dynamics.com"
+    }
+  ]
+}

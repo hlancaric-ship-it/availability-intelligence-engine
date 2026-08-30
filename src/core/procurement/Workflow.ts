@@ -25,8 +25,8 @@ export class ProcurementWorkflow {
             await this.purchaseOrders.savePlan(tenantId, plan);
             this.logger.info('Procurement plan created', { tenantId, eventId, newOrders: plan.purchaseOrders.length, unfulfilledCount: plan.unfulfilled.length });
             await this.audit.append({ tenantId, type: 'PROCUREMENT_PLAN_CREATED', entityId: eventId, payload: { purchaseOrders: plan.purchaseOrders.length, unfulfilled: plan.unfulfilled }, occurredAt: new Date().toISOString() });
-            
-            for (const order of plan.purchaseOrders.filter((candidate) => candidate.status === 'DRAFT')) {
+
+            for (const order of plan.purchaseOrders.filter((candidate: PurchaseOrder) => candidate.status === 'DRAFT')) {
                 if (!await this.idempotency.claim(order.id, 'DISPATCH_PO')) {
                     this.logger.info('PO dispatch skipped (idempotent)', { tenantId, eventId, orderId: order.id });
                     continue;
@@ -103,6 +103,32 @@ export class ProcurementWorkflow {
         }
     }
 
+    public async approvePurchaseOrder(tenantId: string, eventId: string, purchaseOrderId: string) {
+        if (!await this.idempotency.claim(eventId, 'APPROVE_PO')) {
+            this.logger.info('PO approval skipped (idempotent)', { tenantId, eventId, purchaseOrderId });
+            return;
+        }
+        try {
+            this.logger.info('Approving PO', { tenantId, eventId, purchaseOrderId });
+            await this.purchaseOrders.approve(tenantId, purchaseOrderId);
+            const orders = await this.purchaseOrders.getOrdersByIds(tenantId, [purchaseOrderId]);
+            if (orders.length === 0) throw new Error(`Purchase order ${purchaseOrderId} not found`);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const order = orders[0]!;
+            const result = await this.supplierDispatch.dispatchPurchaseOrder(order);
+            await this.purchaseOrders.markAsSent(purchaseOrderId);
+            await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVED', entityId: eventId, payload: { purchaseOrderId, externalId: result.externalId }, occurredAt: new Date().toISOString() });
+            await this.idempotency.complete(eventId, 'APPROVE_PO');
+            this.logger.info('PO approved and dispatched', { tenantId, eventId, purchaseOrderId });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to approve PO', { tenantId, eventId, purchaseOrderId, error: safeError });
+            await this.idempotency.fail(eventId, 'APPROVE_PO');
+            await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVAL_FAILED', entityId: eventId, payload: { purchaseOrderId, error: safeError }, occurredAt: new Date().toISOString() });
+            throw error;
+        }
+    }
+
     public async syncSupplierStatus(tenantId: string, eventId: string) {
         if (!await this.idempotency.claim(eventId, 'SYNC_SUPPLIER_STATUS')) {
             this.logger.info('Supplier status sync skipped (idempotent)', { tenantId, eventId });
@@ -122,6 +148,87 @@ export class ProcurementWorkflow {
             this.logger.error('Failed to sync supplier status', { tenantId, eventId, error: safeError });
             await this.idempotency.fail(eventId, 'SYNC_SUPPLIER_STATUS');
             await this.audit.append({ tenantId, type: 'SUPPLIER_STATUS_SYNC_FAILED', entityId: eventId, payload: { error: safeError }, occurredAt: new Date().toISOString() });
+            throw error;
+        }
+    }
+
+    public async updatePurchaseOrderLineQuantity(tenantId: string, eventId: string, lineId: string, newQuantity: number) {
+        if (!await this.idempotency.claim(eventId, 'UPDATE_PO_LINE_QTY')) {
+            this.logger.info('Update line quantity skipped (idempotent)', { tenantId, eventId, lineId });
+            return;
+        }
+        try {
+            this.logger.info('Manual update of PO line quantity', { tenantId, eventId, lineId, newQuantity });
+            if (this.purchaseOrders.updateLineQuantity) {
+                await this.purchaseOrders.updateLineQuantity(tenantId, lineId, newQuantity);
+            }
+            await this.audit.append({
+                tenantId,
+                type: 'MANUAL_OVERRIDE_PO_LINE_QUANTITY',
+                entityId: lineId,
+                payload: { newQuantity, origin: 'MANUAL' },
+                occurredAt: new Date().toISOString(),
+            });
+            await this.idempotency.complete(eventId, 'UPDATE_PO_LINE_QTY');
+            this.logger.info('PO line quantity updated successfully', { tenantId, eventId, lineId });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to update PO line quantity', { tenantId, eventId, lineId, error: safeError });
+            await this.idempotency.fail(eventId, 'UPDATE_PO_LINE_QTY');
+            throw error;
+        }
+    }
+
+    public async overridePurchaseOrderSupplier(tenantId: string, eventId: string, orderId: string, newSupplierId: string) {
+        if (!await this.idempotency.claim(eventId, 'OVERRIDE_PO_SUPPLIER')) {
+            this.logger.info('Override PO supplier skipped (idempotent)', { tenantId, eventId, orderId });
+            return;
+        }
+        try {
+            this.logger.info('Manual override of PO supplier', { tenantId, eventId, orderId, newSupplierId });
+            if (this.purchaseOrders.overrideSupplier) {
+                await this.purchaseOrders.overrideSupplier(tenantId, orderId, newSupplierId);
+            }
+            await this.audit.append({
+                tenantId,
+                type: 'MANUAL_OVERRIDE_PO_SUPPLIER',
+                entityId: orderId,
+                payload: { newSupplierId, origin: 'MANUAL' },
+                occurredAt: new Date().toISOString(),
+            });
+            await this.idempotency.complete(eventId, 'OVERRIDE_PO_SUPPLIER');
+            this.logger.info('PO supplier overridden successfully', { tenantId, eventId, orderId });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to override PO supplier', { tenantId, eventId, orderId, error: safeError });
+            await this.idempotency.fail(eventId, 'OVERRIDE_PO_SUPPLIER');
+            throw error;
+        }
+    }
+
+    public async reallocateCustomerOrder(tenantId: string, eventId: string, customerOrderLineId: string, newQuantity: number) {
+        if (!await this.idempotency.claim(eventId, 'MANUAL_REALLOCATE')) {
+            this.logger.info('Manual reallocate skipped (idempotent)', { tenantId, eventId, customerOrderLineId });
+            return;
+        }
+        try {
+            this.logger.info('Manual reallocation of customer order line', { tenantId, eventId, customerOrderLineId, newQuantity });
+            if (this.readiness.reallocate) {
+                await this.readiness.reallocate(tenantId, customerOrderLineId, newQuantity);
+            }
+            await this.audit.append({
+                tenantId,
+                type: 'MANUAL_REALLOCATION',
+                entityId: customerOrderLineId,
+                payload: { newQuantity, origin: 'MANUAL' },
+                occurredAt: new Date().toISOString(),
+            });
+            await this.idempotency.complete(eventId, 'MANUAL_REALLOCATE');
+            this.logger.info('Reallocation completed successfully', { tenantId, eventId, customerOrderLineId });
+        } catch (error) {
+            const safeError = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to reallocate customer order', { tenantId, eventId, customerOrderLineId, error: safeError });
+            await this.idempotency.fail(eventId, 'MANUAL_REALLOCATE');
             throw error;
         }
     }
