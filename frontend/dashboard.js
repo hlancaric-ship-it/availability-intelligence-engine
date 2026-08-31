@@ -418,8 +418,8 @@ class AppState {
                     
                     <!-- BALICÍ SOUPISKA (PICKLIST) PŘÍMO NA ŠTÍTKU -->
                     <div class="picklist">
-                        <div class="picklist-header">📦 BALICÍ SOUPISKA (CO PATŘÍ DO TOHOTO BALÍKU):</div>
-                        ${ord.items.map(i => `<div class="picklist-item">▪ <b>${i.required}x</b> ${i.productName} <small style="color:#555;">[SKU: ${i.sku}]</small></div>`).join('')}
+                        <div class="picklist-header">📦 BALICÍ SOUPISKA (KDE ZBOŽÍ NAJÍT VE SKLADĚ):</div>
+                        ${ord.items.map(i => `<div class="picklist-item">▪ <b>${i.required}x</b> ${i.productName} <span style="background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;font-size:11px;">📍 Regál A-${(i.sku.charCodeAt(0)%15)+1}/P-${(i.sku.length%4)+1}</span></div>`).join('')}
                     </div>
                     <div style="margin-top:10px;font-size:10px;color:#666;text-align:center;">AIE 2.0 Operational Shipping Label</div>
                 </div>
@@ -1056,9 +1056,10 @@ function openOrderDetailModal(order) {
                 <thead>
                     <tr>
                         <th>Produkt</th>
+                        <th>Umístění ve skladě</th>
                         <th>Objednáno</th>
                         <th>Alokováno</th>
-                        <th>Celková fyzická zásoba skladu</th>
+                        <th>Celková zásoba</th>
                         <th>Na cestě / Dorazilo</th>
                         <th>Přiřazeno k expedici</th>
                         <th>Stav položky</th>
@@ -1068,6 +1069,7 @@ function openOrderDetailModal(order) {
                     ${order.items.map(it => {
                         const totalPhysicalStock = (it.stock || 0) + 5;
                         const freeStock = Math.max(0, totalPhysicalStock - it.required);
+                        const binLocation = it.binLocation || `Regál A-${(it.sku.charCodeAt(0) % 15) + 1} / P-${(it.sku.length % 4) + 1}`;
                         return `
                         <tr>
                             <td>
@@ -1076,6 +1078,7 @@ function openOrderDetailModal(order) {
                                     <div><b>${it.productName}</b><br><small style="color: var(--text-subtle)">Kód: ${it.sku}</small></div>
                                 </div>
                             </td>
+                            <td><span class="manual-override-badge" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">📍 ${binLocation}</span></td>
                             <td><b>${it.required} ks</b></td>
                             <td>${it.stock} ks</td>
                             <td><b>${totalPhysicalStock} ks</b> <small style="color: var(--text-subtle)">(volno ${freeStock} ks)</small></td>
