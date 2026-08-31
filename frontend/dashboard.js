@@ -330,6 +330,38 @@ class AppState {
         }
     }
 
+    processBarcodeScan(code) {
+        if (!code || !code.trim()) return;
+        const query = code.trim().toUpperCase();
+        const d = this.data;
+
+        // 1. Try matching Purchase Order ID
+        const po = d.purchaseOrders.find(p => p.id.toUpperCase() === query);
+        if (po) {
+            this.receiveGoods(po.id);
+            this.showToast(`📷 Nákupní balík ${po.id} naskladněn skenerem!`, 'success');
+            return;
+        }
+
+        // 2. Try matching Customer Order ID
+        const ord = d.customerOrders.find(o => o.orderId.toUpperCase() === query);
+        if (ord) {
+            window.openOrder(ord.orderId);
+            this.showToast(`📷 Objednávka ${ord.orderId} otevřena přes skener!`, 'success');
+            return;
+        }
+
+        // 3. Try matching SKU item across orders
+        const matchingOrder = d.customerOrders.find(o => o.items.some(i => i.sku.toUpperCase() === query));
+        if (matchingOrder) {
+            window.openOrder(matchingOrder.orderId);
+            this.showToast(`📷 Nalezena objednávka ${matchingOrder.orderId} s položkou ${query}!`, 'success');
+            return;
+        }
+
+        this.showToast(`⚠️ Kód '${query}' nebyl nalezen v otevřených balících ani objednávkách.`, 'danger');
+    }
+
     shipOrder(orderId) {
         const ord = this.data.customerOrders.find(o => o.orderId === orderId);
         if (!ord) return;
@@ -1269,6 +1301,24 @@ function setupNavigation() {
         closeGuide.onclick = () => {
             guidePanel.classList.add('hidden');
             if (guideToggle) guideToggle.textContent = 'Zobrazit rychlého průvodce';
+        };
+    }
+
+    // Barcode scanner listener
+    const scanInput = document.getElementById('barcode-scan-input');
+    const scanBtn = document.getElementById('btn-process-scan');
+    if (scanInput) {
+        scanInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                window.appState.processBarcodeScan(scanInput.value);
+                scanInput.value = '';
+            }
+        });
+    }
+    if (scanBtn && scanInput) {
+        scanBtn.onclick = () => {
+            window.appState.processBarcodeScan(scanInput.value);
+            scanInput.value = '';
         };
     }
 

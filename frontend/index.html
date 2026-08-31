@@ -408,10 +408,18 @@
                     </div>
 
                     <div class="section-card">
-                        <div class="section-card-header">
-                            <div>
-                                <h2 class="section-card-title">PŘÍJEM ZBOŽÍ NA SKLAD & KONTROLA ZÁSILEK</h2>
-                                <p class="section-card-subtitle">Porovnání objednaného, skutečně přijatého a zbývajícího množství s automatickým přiřazením k zákazníkům.</p>
+                        <div class="section-card-header" style="flex-direction: column; align-items: stretch; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="section-card-title">PŘÍJEM ZBOŽÍ NA SKLAD & KONTROLA ZÁSILEK</h2>
+                                    <p class="section-card-subtitle">Porovnání objednaného, skutečně přijatého a zbývajícího množství s automatickým přiřazením k zákazníkům.</p>
+                                </div>
+                            </div>
+
+                            <!-- Barcode Scanner / SKU Search Input -->
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="barcode-scan-input" placeholder="📷 Pípněte skenerem čárový kód EAN / SKU položky nebo číslo nákupního balíku (např. TRIKO-BASIC-BLK-M nebo NÁKUP-2026-08-001)..." autofocus style="flex: 1; padding: 12px 14px; border: 2px solid var(--brand-red); border-radius: var(--radius-md); font-size: 13px; font-weight: 600;">
+                                <button class="btn-action-red" id="btn-process-scan">🔍 Zpracovat sken</button>
                             </div>
                         </div>
                         <div id="receiving-list" class="receiving-grid"></div>
