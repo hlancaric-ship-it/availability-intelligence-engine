@@ -1314,7 +1314,7 @@ function renderProductsCatalog(app, searchTerm = '') {
                 <div class="product-catalog-header">
                     <div>
                         <span class="item-tag">PRODUKT</span>
-                        <h3 class="product-main-title">PRODUCT.PRODUCTNAME}</h3>
+                        <h3 class="product-main-title">${product.productName}</h3>
                         <span style="font-size: 12px; color: var(--text-muted);">${allVariants.length} varianty &middot; propojeno na ${totalMappings} dodavatelských záznamů</span>
                     </div>
                 </div>
