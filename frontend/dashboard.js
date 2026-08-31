@@ -2549,27 +2549,34 @@ window.renderStatsKpiView = function(appState) {
     if (!container) return;
 
     const mockKpis = [
-        { name: 'Jan Novák', station: 'Stanice A1', packages: 42, items: 128, weight: '68.5 kg', speed: '2 min 15 s / balík', photoCount: 42, status: 'Top Výkon' },
-        { name: 'Klára Svobodová', station: 'Stanice B2', packages: 38, items: 94, weight: '45.0 kg', speed: '2 min 40 s / balík', photoCount: 38, status: 'V normě' },
-        { name: 'Petr Dvořák', station: 'Stanice C1', packages: 29, items: 82, weight: '51.2 kg', speed: '3 min 10 s / balík', photoCount: 29, status: 'Pomalý rytmus' }
+        { name: 'Jan Novák', station: 'Stanice A1', packages: 42, items: 128, weight: '68.5 kg', speed: '2 min 15 s / balík', photoCount: 42 },
+        { name: 'Klára Svobodová', station: 'Stanice B2', packages: 38, items: 94, weight: '45.0 kg', speed: '2 min 40 s / balík', photoCount: 38 },
+        { name: 'Petr Dvořák', station: 'Stanice C1', packages: 29, items: 82, weight: '51.2 kg', speed: '3 min 10 s / balík', photoCount: 29 }
     ];
 
     container.innerHTML = `
-        <div class="grid-3 mb-6">
+        <!-- FINANČNÍ A CELKOVÉ OPERAČNÍ STATISTIKY -->
+        <h4 class="subsection-title mb-3">FINANČNÍ PŘEHLED EXPEDICE & PRŮMĚRY</h4>
+        <div class="grid-4 mb-6">
             <div class="info-block" style="background:#f0fdf4; border-color:#bbf7d0;">
-                <span class="info-block-label" style="color:#166534;">Dnes celkem zabaleno</span>
-                <span class="info-block-value" style="color:#15803d; font-size:28px;">109 balíků</span>
-                <span class="info-block-sub" style="color:#166534;">100% balíků s automatickou fotodokumentací</span>
+                <span class="info-block-label" style="color:#166534;">Hodnota expedice celkem</span>
+                <span class="info-block-value" style="color:#15803d; font-size:26px;">184 250 Kč</span>
+                <span class="info-block-sub" style="color:#166534;">Za dnešní den (109 balíků)</span>
             </div>
             <div class="info-block" style="background:#eff6ff; border-color:#bfdbfe;">
-                <span class="info-block-label" style="color:#1e40af;">Celková expedovaná váha</span>
-                <span class="info-block-value" style="color:#1d4ed8; font-size:28px;">164.7 kg</span>
-                <span class="info-block-sub" style="color:#1e40af;">Průměr 1.51 kg / balík</span>
+                <span class="info-block-label" style="color:#1e40af;">Průměrná hodnota 1 obj.</span>
+                <span class="info-block-value" style="color:#1d4ed8; font-size:26px;">1 690 Kč</span>
+                <span class="info-block-sub" style="color:#1e40af;">Průměrně 2.8 ks / objednávka</span>
+            </div>
+            <div class="info-block" style="background:#fffbeb; border-color:#fef08a;">
+                <span class="info-block-label" style="color:#92400e;">Průměrná cena dopravy</span>
+                <span class="info-block-value" style="color:#b45309; font-size:26px;">79 Kč</span>
+                <span class="info-block-sub" style="color:#92400e;">Celkem doprava: 8 611 Kč</span>
             </div>
             <div class="info-block" style="background:#faf5ff; border-color:#e9d5ff;">
-                <span class="info-block-label" style="color:#6b21a8;">Průměrná rychlost balení</span>
-                <span class="info-block-value" style="color:#7e22ce; font-size:28px;">2 min 32 s</span>
-                <span class="info-block-sub" style="color:#6b21a8;">Včetně naskenování & vyfocení</span>
+                <span class="info-block-label" style="color:#6b21a8;">Průměrná cena za balné</span>
+                <span class="info-block-value" style="color:#7e22ce; font-size:26px;">18 Kč</span>
+                <span class="info-block-sub" style="color:#6b21a8;">Krabice, lepící páska & výplň</span>
             </div>
         </div>
 
