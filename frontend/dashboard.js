@@ -1565,83 +1565,152 @@ function setupNavigation() {
         };
     }
 
-    // Add Feed Dialog
+    // Add Feed Dialog (Full Visual Modal)
     const btnAddFeed = document.getElementById('btn-add-feed-dialog');
-    if (btnAddFeed) {
+    const feedModal = document.getElementById('feed-modal');
+    const feedModalClose = document.getElementById('feed-modal-close-btn');
+    const feedModalBody = document.getElementById('feed-modal-body');
+
+    if (btnAddFeed && feedModal && feedModalBody) {
         btnAddFeed.onclick = () => {
-            const feedUrl = prompt('Zadejte URL adresu datového feedu dodavatele (XML/CSV):', 'https://supplier.cz/feeds/export.xml');
-            if (feedUrl) {
-                const supplierName = prompt('Zadejte název dodavatele pro tento feed:', 'Helikon-Tex');
-                if (supplierName) {
-                    showToast(`📡 Feed pro dodavatele "${supplierName}" byl úspěšně připojen a stažen!`, 'success');
-                    const feedsContainer = document.getElementById('feeds-list');
-                    if (feedsContainer) {
-                        feedsContainer.innerHTML = `
-                            <div class="alert-box alert-success mb-4">
-                                <span class="alert-title">DATOVÝ FEED JE AKTIVNÍ</span>
-                                <p class="alert-body">Zdroj: <b>${feedUrl}</b> &middot; Dodavatel: <b>${supplierName}</b> &middot; Poslední synchronizace: Dnes 05:00 (1 420 položek, 100% spárováno).</p>
-                            </div>
-                        `;
-                    }
-                }
-            }
+            feedModalBody.innerHTML = `
+                <form id="feed-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <label class="text-label mb-1">URL Adresa XML / CSV Feedu dodavatele:</label>
+                        <input type="url" id="feed-url-input" class="w-full" required style="padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);" value="https://supplier-portal.cz/export/catalog.xml" />
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label class="text-label mb-1">Dodavatel:</label>
+                            <select id="feed-supplier-select" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                <option value="Helikon-Tex">Helikon-Tex</option>
+                                <option value="Brandit CZ">Brandit CZ</option>
+                                <option value="Mil-Tec Wholesale">Mil-Tec Wholesale</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-label mb-1">Frekvence synchronizace:</label>
+                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                <option value="15">Každých 15 minut</option>
+                                <option value="60" selected>Každou hodinu</option>
+                                <option value="360">Každých 6 hodin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                        <button type="button" class="btn-secondary btn-sm" id="btn-cancel-feed">Zrušit</button>
+                        <button type="submit" class="btn-action-red btn-sm">📡 Připojit a stáhnout feed</button>
+                    </div>
+                </form>
+            `;
+            feedModal.classList.add('active');
+
+            document.getElementById('btn-cancel-feed').onclick = () => feedModal.classList.remove('active');
+            document.getElementById('feed-form').onsubmit = (e) => {
+                e.preventDefault();
+                const url = document.getElementById('feed-url-input').value;
+                const supp = document.getElementById('feed-supplier-select').value;
+                feedModal.classList.remove('active');
+                showToast(`📡 Feed pro dodavatele "${supp}" byl úspěšně připojen a stažen!`, 'success');
+            };
         };
+        if (feedModalClose) feedModalClose.onclick = () => feedModal.classList.remove('active');
     }
 
-    // Add Carrier Dialog
+    // Add Carrier Dialog (Full Visual Modal)
     const btnAddCarrier = document.getElementById('btn-add-carrier-dialog');
-    if (btnAddCarrier) {
+    const carrierModal = document.getElementById('carrier-modal');
+    const carrierModalClose = document.getElementById('carrier-modal-close-btn');
+    const carrierModalBody = document.getElementById('carrier-modal-body');
+
+    if (btnAddCarrier && carrierModal && carrierModalBody) {
         btnAddCarrier.onclick = () => {
-            const carrierName = prompt('Zadejte název nového dopravce (např. GLS, Messenger, Toptrans):', 'GLS CZ');
-            if (carrierName) {
-                showToast(`🚚 Dopravce "${carrierName}" byl přidán a aktivován pro expedici.`, 'success');
-                const carriersContainer = document.getElementById('carriers-list');
-                if (carriersContainer) {
-                    carriersContainer.innerHTML = `
-                        <div class="item-card">
-                            <div class="item-card-header">
-                                <div>
-                                    <span class="item-tag">PŘEPRAVNÍ SLUŽBA</span>
-                                    <h3 class="card-title">${carrierName.toUpperCase()}</h3>
-                                </div>
-                                <span class="status-pill status-ready">Aktivní pro expedici</span>
-                            </div>
-                            <div class="mb-2">
-                                <p><b>Sledování zásilek:</b> Integrováno přes API/Štítky &middot; <b>Doba doručení:</b> 24 hodin</p>
-                            </div>
+            carrierModalBody.innerHTML = `
+                <form id="carrier-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <label class="text-label mb-1">Název přepravce / Dopravce:</label>
+                        <input type="text" id="carrier-name-input" class="w-full" required style="padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);" value="GLS CZ & SK" />
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label class="text-label mb-1">Typ integrace:</label>
+                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                <option value="API">Přímé API generování štítků</option>
+                                <option value="CSV">Sledovací čísla z CSV</option>
+                            </select>
                         </div>
-                    `;
-                }
-            }
+                        <div>
+                            <label class="text-label mb-1">Průměrná doba doručení:</label>
+                            <input type="text" value="24 hodin (Do druhého dne)" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);" />
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                        <button type="button" class="btn-secondary btn-sm" id="btn-cancel-carrier">Zrušit</button>
+                        <button type="submit" class="btn-action-red btn-sm">🚚 Uložit dopravce</button>
+                    </div>
+                </form>
+            `;
+            carrierModal.classList.add('active');
+
+            document.getElementById('btn-cancel-carrier').onclick = () => carrierModal.classList.remove('active');
+            document.getElementById('carrier-form').onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('carrier-name-input').value;
+                carrierModal.classList.remove('active');
+                showToast(`🚚 Dopravce "${name}" byl úspěšně uplatněn v systému.`, 'success');
+            };
         };
+        if (carrierModalClose) carrierModalClose.onclick = () => carrierModal.classList.remove('active');
     }
 
-    // Add Rule Dialog
+    // Add Rule Dialog (Full Visual Modal)
     const btnAddRule = document.getElementById('btn-add-rule-dialog');
-    if (btnAddRule) {
+    const ruleModal = document.getElementById('rule-modal');
+    const ruleModalClose = document.getElementById('rule-modal-close-btn');
+    const ruleModalBody = document.getElementById('rule-modal-body');
+
+    if (btnAddRule && ruleModal && ruleModalBody) {
         btnAddRule.onclick = () => {
-            const ruleName = prompt('Zadejte název nového pravidla pro automatický nákup:', 'Při nákupu nad 5 000 Kč automaticky schválit bez dotazu');
-            if (ruleName) {
-                showToast(`⚡ Automatizační pravidlo "${ruleName}" bylo uloženo a aktivováno.`, 'success');
-                const rulesContainer = document.getElementById('rules-list');
-                if (rulesContainer) {
-                    rulesContainer.innerHTML = `
-                        <div class="item-card">
-                            <div class="item-card-header">
-                                <div>
-                                    <span class="item-tag">AUTOMATIZAČNÍ PRAVIDLO</span>
-                                    <h3 class="card-title">${ruleName.toUpperCase()}</h3>
-                                </div>
-                                <span class="status-pill status-ready">Aktivní pravidlo</span>
-                            </div>
-                            <div class="mb-2">
-                                <p><b>Aplikuje se na:</b> Všechny nově příchozí objednávky z e-shopu &middot; <b>Stav:</b> Aktivováno</p>
-                            </div>
+            ruleModalBody.innerHTML = `
+                <form id="rule-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <label class="text-label mb-1">Název automatizačního pravidla:</label>
+                        <input type="text" id="rule-name-input" class="w-full" required style="padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);" value="Automaticky schválit nákup při marži nad 30 %" />
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label class="text-label mb-1">Spouštěcí podmínka:</label>
+                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                <option>Všechny položky skladem u 1 dodavatele</option>
+                                <option>Dodací lhůta kratší než 48 hodin</option>
+                                <option>Nákupní cena pod 10 000 Kč</option>
+                            </select>
                         </div>
-                    `;
-                }
-            }
+                        <div>
+                            <label class="text-label mb-1">Požadovaná akce:</label>
+                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                <option>Ihned odeslat dodavateli e-mailem</option>
+                                <option>Předat ke schválení e-shopařem</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                        <button type="button" class="btn-secondary btn-sm" id="btn-cancel-rule">Zrušit</button>
+                        <button type="submit" class="btn-action-red btn-sm">⚡ Uložit a aktivovat pravidlo</button>
+                    </div>
+                </form>
+            `;
+            ruleModal.classList.add('active');
+
+            document.getElementById('btn-cancel-rule').onclick = () => ruleModal.classList.remove('active');
+            document.getElementById('rule-form').onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('rule-name-input').value;
+                ruleModal.classList.remove('active');
+                showToast(`⚡ Pravidlo "${name}" bylo aktivováno v automatizačním jádru.`, 'success');
+            };
         };
+        if (ruleModalClose) ruleModalClose.onclick = () => ruleModal.classList.remove('active');
     }
 
     // Settings save
