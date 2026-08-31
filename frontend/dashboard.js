@@ -2573,18 +2573,17 @@ window.renderStatsKpiView = function(appState) {
             </div>
         </div>
 
-        <h4 class="subsection-title">VÝKONNOST SKLADNÍKŮ & PRACUJE NA STANICÍCH</h4>
+        <h4 class="subsection-title">EVIDENCE BALENÍ NA SKLADOVÝCH STANICÍCH</h4>
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Skladník / Obsluha</th>
+                    <th>Skladník (Kdo balil)</th>
                     <th>Pracovní stanice</th>
                     <th>Zabaleno balíků</th>
                     <th>Kusů zboží</th>
                     <th>Celková váha</th>
                     <th>Průměrný čas / 1 balík</th>
                     <th>Fotogalerie balení</th>
-                    <th>Hodnocení KPI</th>
                 </tr>
             </thead>
             <tbody>
@@ -2597,11 +2596,6 @@ window.renderStatsKpiView = function(appState) {
                         <td><b>${k.weight}</b></td>
                         <td>${k.speed}</td>
                         <td><span class="status-pill status-ready">📸 ${k.photoCount} fotek</span></td>
-                        <td>
-                            <span class="status-pill ${k.status === 'Top Výkon' ? 'status-ready' : k.status === 'V normě' ? 'status-info' : 'status-warning'}">
-                                ${k.status}
-                            </span>
-                        </td>
                     </tr>
                 `).join('')}
             </tbody>
