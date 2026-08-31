@@ -5,6 +5,42 @@ export interface PaymentInfo {
     totalAmount?: number;
 }
 
+export interface ParcelPackage {
+    packageId: string;
+    packageNumber: number; // e.g. 1 of 2
+    totalPackages: number;
+    carrier: string;
+    trackingNumber: string;
+    weightKg: number;
+    isAdditional: boolean; // dodatečný štítek (reklamace / ztráta)
+    reason?: string;
+    createdAt: string;
+}
+
+export interface PackingPhoto {
+    id: string;
+    timestamp: string;
+    photoUrl: string;
+    packerName: string;
+    stationId: string;
+}
+
+export interface PackingKpiStats {
+    packerId: string;
+    packerName: string;
+    packagesCount: number;
+    itemsCount: number;
+    totalWeightKg: number;
+    avgPackTimeSeconds: number;
+}
+
+export interface PickupSchedule {
+    carrier: string;
+    pickupTime: string; // e.g. "15:30"
+    autoTriggerEnabled: boolean;
+    lastPickupAt?: string;
+}
+
 export interface CustomerOrderLine {
     id: string;
     orderId: string;

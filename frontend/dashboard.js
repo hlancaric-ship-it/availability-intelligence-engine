@@ -1152,12 +1152,37 @@ function openOrderDetailModal(order) {
             </div>
         </div>
 
+        <!-- 3.7 Photo Audit Station -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <h4 class="subsection-title">📷 FOTOGALERIE Z PRACUJÍCÍ STANICE (AUTOMATICKÉ FOCENÍ BALENÍ)</h4>
+            <div style="display:flex; gap:12px; align-items:center; overflow-x:auto; padding:8px 0;">
+                <div style="position:relative; flex-shrink:0;">
+                    <img src="https://placehold.co/120x90/e2e8f0/0f172a?text=Foto+Baleni+1" style="border-radius:6px; border:1px solid var(--border-color);" />
+                    <span style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:2px 4px; border-radius:3px;">14:32:05</span>
+                </div>
+                <div style="position:relative; flex-shrink:0;">
+                    <img src="https://placehold.co/120x90/e2e8f0/0f172a?text=Foto+Obsah+2" style="border-radius:6px; border:1px solid var(--border-color);" />
+                    <span style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:2px 4px; border-radius:3px;">14:32:18</span>
+                </div>
+                <div style="background:var(--bg-subtle); border:1px dashed var(--border-color); border-radius:6px; width:120px; height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+                    <span style="font-size:20px;">📸</span>
+                    <span style="font-size:10px; color:var(--text-subtle);">Stanice A1</span>
+                </div>
+            </div>
+        </div>
+
         <!-- 4. Manual Overrides Center -->
         <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
             <h4 style="font-size: 13px; font-weight: 800; color: var(--brand-red); text-transform: uppercase; margin-bottom: 10px;">
-                Možnosti ručního zásahu (Ruční úpravy)
+                Možnosti ručního zásahu & Pokročilá Logistika
             </h4>
             <div class="flex flex-wrap gap-2">
+                <button class="btn-secondary btn-sm" onclick="window.appState.generateMultiPackLabels('${order.orderId}')">
+                    📦 Zabalit do více balíků...
+                </button>
+                <button class="btn-secondary btn-sm" onclick="window.appState.printAdditionalLabel('${order.orderId}')">
+                    🏷️ Vytisknout dodatečný štítek (reklamace)...
+                </button>
                 <button class="btn-secondary btn-sm" onclick="const s = prompt('Zadejte nového dodavatele:', 'Brandit CZ'); if(s) window.appState.overrideOrderSupplier('${order.orderId}', s);">
                     Změnit dodavatele...
                 </button>
@@ -1756,6 +1781,8 @@ function switchView(viewName) {
         feeds: { eyebrow: 'FEEDY', title: 'Datové feedy od dodavatelů' },
         carriers: { eyebrow: 'DOPRAVCI', title: 'Přepravní služby' },
         rules: { eyebrow: 'PRAVIDLA', title: 'Automatizační pravidla' },
+        stats: { eyebrow: 'STATISTIKY & KPI', title: 'Výkonnost skladu, balení a skladníků' },
+        pickups: { eyebrow: 'SVOZY DOPRAVCŮ', title: 'Automatické časové harmonogramy svozů' },
         audit: { eyebrow: 'AUDIT', title: 'Kompletní protokol systému' },
     };
 
@@ -1767,6 +1794,8 @@ function switchView(viewName) {
     if (viewName === 'products') renderProductsCatalog(state, '');
     if (viewName === 'suppliers') renderSuppliersManagement(state);
     if (viewName === 'availability') renderAvailabilityView(state);
+    if (viewName === 'stats') renderStatsKpiView(state);
+    if (viewName === 'pickups') renderPickupsScheduleView(state);
     if (viewName === 'audit') renderFullAuditView(state);
 }
 
@@ -2508,5 +2537,187 @@ window.openRuleDialog = () => {
         showToast(`Pravidlo „${name}" bylo uloženo a zavedeno do AIE.`, 'success');
     };
     modal.classList.add('active');
+    modal.classList.add('active');
 };
+
+// ============================================================
+// LOGISTICS & KPI IMPLEMENTATION (Stats, Pickups, Multi-Pack, Extra Labels)
+// ============================================================
+
+window.renderStatsKpiView = function(appState) {
+    const container = document.getElementById('stats-kpi-container');
+    if (!container) return;
+
+    const mockKpis = [
+        { name: 'Jan Novák', station: 'Stanice A1', packages: 42, items: 128, weight: '68.5 kg', speed: '2 min 15 s / balík', photoCount: 42, status: 'Top Výkon' },
+        { name: 'Klára Svobodová', station: 'Stanice B2', packages: 38, items: 94, weight: '45.0 kg', speed: '2 min 40 s / balík', photoCount: 38, status: 'V normě' },
+        { name: 'Petr Dvořák', station: 'Stanice C1', packages: 29, items: 82, weight: '51.2 kg', speed: '3 min 10 s / balík', photoCount: 29, status: 'Pomalý rytmus' }
+    ];
+
+    container.innerHTML = `
+        <div class="grid-3 mb-6">
+            <div class="info-block" style="background:#f0fdf4; border-color:#bbf7d0;">
+                <span class="info-block-label" style="color:#166534;">Dnes celkem zabaleno</span>
+                <span class="info-block-value" style="color:#15803d; font-size:28px;">109 balíků</span>
+                <span class="info-block-sub" style="color:#166534;">100% balíků s automatickou fotodokumentací</span>
+            </div>
+            <div class="info-block" style="background:#eff6ff; border-color:#bfdbfe;">
+                <span class="info-block-label" style="color:#1e40af;">Celková expedovaná váha</span>
+                <span class="info-block-value" style="color:#1d4ed8; font-size:28px;">164.7 kg</span>
+                <span class="info-block-sub" style="color:#1e40af;">Průměr 1.51 kg / balík</span>
+            </div>
+            <div class="info-block" style="background:#faf5ff; border-color:#e9d5ff;">
+                <span class="info-block-label" style="color:#6b21a8;">Průměrná rychlost balení</span>
+                <span class="info-block-value" style="color:#7e22ce; font-size:28px;">2 min 32 s</span>
+                <span class="info-block-sub" style="color:#6b21a8;">Včetně naskenování & vyfocení</span>
+            </div>
+        </div>
+
+        <h4 class="subsection-title">VÝKONNOST SKLADNÍKŮ & PRACUJE NA STANICÍCH</h4>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Skladník / Obsluha</th>
+                    <th>Pracovní stanice</th>
+                    <th>Zabaleno balíků</th>
+                    <th>Kusů zboží</th>
+                    <th>Celková váha</th>
+                    <th>Průměrný čas / 1 balík</th>
+                    <th>Fotogalerie balení</th>
+                    <th>Hodnocení KPI</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${mockKpis.map(k => `
+                    <tr>
+                        <td><b>👤 ${k.name}</b></td>
+                        <td><span class="manual-override-badge">📍 ${k.station}</span></td>
+                        <td><b>${k.packages} balíků</b></td>
+                        <td>${k.items} ks</td>
+                        <td><b>${k.weight}</b></td>
+                        <td>${k.speed}</td>
+                        <td><span class="status-pill status-ready">📸 ${k.photoCount} fotek</span></td>
+                        <td>
+                            <span class="status-pill ${k.status === 'Top Výkon' ? 'status-ready' : k.status === 'V normě' ? 'status-info' : 'status-warning'}">
+                                ${k.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+};
+
+window.renderPickupsScheduleView = function(appState) {
+    const container = document.getElementById('pickup-schedule-container');
+    if (!container) return;
+
+    const schedules = [
+        { carrier: 'Zásilkovna / Packeta', integration: 'Nativní přímé API napojení', pickupTime: '14:30', status: 'Automatika aktivní', packagesWaiting: 18, color: '#dc2626' },
+        { carrier: 'DPD CZ (Balíkobot)', integration: 'Balíkobot / Chameleoon API', pickupTime: '16:00', status: 'Automatika aktivní', packagesWaiting: 24, color: '#2563eb' },
+        { carrier: 'PPL / DHL (GO Balík)', integration: 'GO Balík univerzální konektor', pickupTime: '17:15', status: 'Automatika aktivní', packagesWaiting: 12, color: '#16a34a' }
+    ];
+
+    container.innerHTML = `
+        <div class="cards-stack">
+            ${schedules.map(s => `
+                <div class="item-card" style="border-left: 4px solid ${s.color};">
+                    <div class="item-card-header">
+                        <div>
+                            <span class="item-tag">DOPRAVCE & SVOZ</span>
+                            <h3 class="card-title">${s.carrier.toUpperCase()}</h3>
+                        </div>
+                        <span class="status-pill status-ready">${s.status}</span>
+                    </div>
+                    <div class="card-meta-grid">
+                        <div class="meta-item">
+                            <span class="meta-label">Čas automatického svozu</span>
+                            <span class="meta-value" style="font-size:20px; color:var(--brand-red);">⏰ ${s.pickupTime}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Napojení & Rozhraní</span>
+                            <span class="meta-value">${s.integration}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Připraveno balíků ke svozu</span>
+                            <span class="meta-value" style="color:var(--success-text);">${s.packagesWaiting} balíků</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-secondary btn-sm" onclick="showToast('⏰ Čas svozu pro ${s.carrier} byl přenastaven.', 'info')">⚙️ Upravit čas svozu</button>
+                        <button class="btn-action-red btn-sm" onclick="showToast('⚡ Svoz pro ${s.carrier} byl ručně vyvolán a objednán u kurýra.', 'success')">📦 Vyvolat svoz ihned</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+};
+
+// Extend print label logic for multi-pack and additional label generation
+AppState.prototype.printAdditionalLabel = function(orderId) {
+    const ord = this.data.customerOrders.find(o => o.orderId === orderId);
+    if (!ord) return;
+    const reason = prompt('Zadejte důvod pro dodatečný štítek (reklamace / rozbití při přepravě):', 'Náhrada za poškozené zboží kurýrem');
+    if (!reason) return;
+
+    const carrier = ord.carrier || 'Zásilkovna';
+    const tracking = `EXTRA-${ord.orderId}-${Date.now().toString().slice(-6)}`;
+
+    const labelWindow = window.open('', '_blank', 'width=440,height=340');
+    if (labelWindow) {
+        labelWindow.document.write(`
+            <html><head><title>DODATEČNÝ ŠTÍTEK — ${orderId}</title>
+            <style>body{font-family:sans-serif;padding:15px;} .box{border:3px solid #dc2626;padding:16px;border-radius:8px;} .tag{background:#fee2e2;color:#dc2626;font-weight:900;padding:4px;font-size:11px;display:inline-block;}</style>
+            </head><body>
+            <div class="box">
+                <div class="tag">⚠️ DODATEČNÝ ŠTÍTEK (REKLAMACE / ZTRÁTA ZÁSILKY)</div>
+                <h2>${carrier}</h2>
+                <div><b>Příjemce:</b> ${ord.customerName}</div>
+                <div><b>Objednávka:</b> ${orderId}</div>
+                <div><b>Důvod vydání:</b> ${reason}</div>
+                <div style="font-size:24px;font-family:monospace;margin-top:10px;">|||||| ${tracking} ||||||</div>
+            </div>
+            <script>window.print();<\/script>
+            </body></html>
+        `);
+        labelWindow.document.close();
+    }
+    ord.auditTrail.unshift({
+        time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+        actor: 'USER',
+        action: `Vytisknut dodatečný štítek (${tracking}). Důvod: "${reason}".`
+    });
+    showToast(`🖨️ Dodatečný štítek vygenerován (${tracking}).`, 'success');
+};
+
+AppState.prototype.generateMultiPackLabels = function(orderId) {
+    const ord = this.data.customerOrders.find(o => o.orderId === orderId);
+    if (!ord) return;
+    const countStr = prompt('Do kolika balíků balíte tuto objednávku?', '2');
+    if (!countStr || isNaN(parseInt(countStr, 10))) return;
+    const count = parseInt(countStr, 10);
+
+    const carrier = ord.carrier || 'DPD CZ';
+    const labelWindow = window.open('', '_blank', 'width=480,height=400');
+    if (labelWindow) {
+        let content = `<html><head><title>Vícebalíková expedice — ${orderId}</title><style>body{font-family:sans-serif;padding:15px;} .box{border:3px solid #000;padding:14px;margin-bottom:15px;border-radius:8px;}</style></head><body>`;
+        for (let i = 1; i <= count; i++) {
+            const track = `MULTI-${ord.orderId}-${i}/${count}-${Date.now().toString().slice(-4)}`;
+            content += `
+                <div class="box">
+                    <div style="display:flex;justify-space-between;"><b>${carrier}</b> <span>BALÍK <b>${i} z ${count}</b></span></div>
+                    <div><b>Příjemce:</b> ${ord.customerName} (Objednávka ${orderId})</div>
+                    <div style="font-size:22px;font-family:monospace;margin:8px 0;">||||| ${track} |||||</div>
+                    <div style="font-size:11px;color:#555;">Skladová výdejka: Zkontrolováno &amp; Vyfoceno na stanici</div>
+                </div>
+            `;
+        }
+        content += `<script>window.print();<\/script></body></html>`;
+        labelWindow.document.write(content);
+        labelWindow.document.close();
+    }
+    showToast(`🖨️ Vygenerováno ${count} štítků pro vícebalíkovou zásilku.`, 'success');
+};
+
 
