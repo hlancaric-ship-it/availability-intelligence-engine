@@ -292,21 +292,52 @@ class AppState {
         }
     }
 
-    overrideOrderQuantity(orderId, newQty) {
+    overrideOrderQuantity(orderId, newQtyStr) {
         const ord = this.data.customerOrders.find(o => o.orderId === orderId);
-        if (ord) {
-            const oldQty = ord.items.length > 0 ? ord.items[0].required : 0;
-            if (ord.items.length > 0) ord.items[0].required = parseInt(newQty, 10);
+        if (!ord) return;
+        const newQty = parseInt(newQtyStr, 10);
+        if (isNaN(newQty) || newQty < 0) return;
+
+        if (ord.items.length > 0) {
+            const item = ord.items[0];
+            const oldQty = item.required;
+            item.required = newQty;
+
+            // Recalculate allocation & status
+            if (item.stock >= newQty) {
+                item.allocated = newQty;
+                item.waiting = 0;
+                ord.status = 'READY_TO_FULFILL';
+                ord.estimatedShipDate = 'Dnes do 17:00 (ihned k expedici)';
+            } else {
+                item.allocated = item.stock;
+                item.waiting = newQty - item.stock;
+                ord.status = 'WAITING_FOR_STOCK';
+                ord.estimatedShipDate = '30. srpna (po doručení od dodavatelů)';
+            }
+
             ord.auditTrail.unshift({
                 time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
                 actor: 'USER',
-                action: `Ruční úprava požadovaného množství z ${oldQty} ks na ${newQty} ks.`,
+                action: `Ruční úprava požadovaného množství z ${oldQty} ks na ${newQty} ks.`
             });
+
+            this.addToGlobalAudit({
+                targetType: 'ORDER_QUANTITY',
+                targetId: item.sku,
+                orderId: orderId,
+                originalValue: `${oldQty} ks`,
+                newValue: `${newQty} ks`,
+                reason: 'E-shopař ručně upravil požadované množství.',
+                user: 'E-shopař'
+            });
+
             this.render();
             if (this.selectedOrder && this.selectedOrder.orderId === orderId) {
+                this.selectedOrder = ord;
                 openOrderDetailModal(ord);
             }
-            showToast(`Množství bylo ručně upraveno na ${newQty} ks.`, 'success');
+            showToast(`Množství u objednávky ${orderId} bylo upraveno na ${newQty} ks a stav přepočítán.`, 'success');
         }
     }
 
