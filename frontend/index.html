@@ -335,6 +335,10 @@
                                     <h2 class="section-card-title">ZÁKAZNICKÉ OBJEDNÁVKY & STAV EXPEDICE</h2>
                                     <p class="section-card-subtitle">Kliknutím na řádek otevřete detailní příběh a možnosti ručních úprav.</p>
                                 </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-secondary btn-sm" id="btn-bulk-print-labels">🖨️ Hromadně vytisknout štítky</button>
+                                    <button class="btn-success btn-sm" id="btn-bulk-ship-orders">📦 Hromadně expedovat připravené</button>
+                                </div>
                             </div>
                             <!-- Search & filters -->
                             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -379,6 +383,9 @@
                                 <h2 class="section-card-title">NÁKUPNÍ OBJEDNÁVKY U DODAVATELŮ</h2>
                                 <p class="section-card-subtitle">Přehled vygenerovaných nákupů, termínů doručení a stavu schválení.</p>
                             </div>
+                            <button class="btn-action-red btn-sm" id="btn-bulk-approve-pos">
+                                ⚡ Hromadně schválit & odeslat všechny nákupy
+                            </button>
                         </div>
                         <div id="full-po-list" class="po-grid"></div>
                     </div>

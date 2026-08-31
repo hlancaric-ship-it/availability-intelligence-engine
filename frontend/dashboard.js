@@ -376,14 +376,6 @@ class AppState {
         ord.auditTrail.unshift({
             time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
             actor: 'USER',
-            action: `Objednávka expedována. Dopravce: ${carrier} · Číslo zásilky: ${trackingNumber}`,
-        });
-        this.addToGlobalAudit({
-            targetType: 'SYSTEM_ACTION',
-            targetId: orderId,
-            originalValue: 'Připraveno k expedici',
-            newValue: `Expedováno — ${carrier} (${trackingNumber})`,
-            reason: 'E-shopař potvrdil předání zásilky dopravci.',
             user: 'E-shopař',
         });
         this.render();
@@ -419,7 +411,69 @@ class AppState {
                 </body></html>`);
             labelWindow.document.close();
         }
-        showToast(`🖨️ Štítek pro ${orderId} (${carrier}) odeslán na tiskárnu.`, 'success');
+        showToast(`🖨️ Tiskový štítek vygenerován pro ${orderId} (${carrier} · ${tracking})`, 'info');
+    }
+
+    bulkShipReadyOrders() {
+        const readyOrders = this.data.customerOrders.filter(o => o.status === 'READY_TO_FULFILL' || o.status === 'READY_TO_SHIP');
+        if (readyOrders.length === 0) {
+            showToast('Žádné objednávky nečekají na expedici.', 'warning');
+            return;
+        }
+        readyOrders.forEach(ord => {
+            ord.status = 'SHIPPED';
+            ord.carrier = 'DPD';
+            ord.trackingNumber = `DPD-${Date.now().toString().slice(-8)}`;
+            ord.estimatedShipDate = 'Expedováno';
+            ord.auditTrail.unshift({
+                time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+                actor: 'USER',
+                action: 'Hromadná expedice: Zásilka předána dopravci DPD.',
+                user: 'E-shopař',
+            });
+        });
+        showToast(`📦 Hromadně expedováno ${readyOrders.length} objednávek!`, 'success');
+        this.render();
+    }
+
+    bulkPrintLabels() {
+        const readyOrders = this.data.customerOrders.filter(o => o.status === 'READY_TO_FULFILL' || o.status === 'READY_TO_SHIP' || o.status === 'SHIPPED');
+        if (readyOrders.length === 0) {
+            showToast('Žádné štítky k tisku.', 'warning');
+            return;
+        }
+        const labelWindow = window.open('', '_blank', 'width=500,height=600');
+        if (labelWindow) {
+            labelWindow.document.write(`
+                <html><head><title>Hromadný tisk štítků (${readyOrders.length})</title></head>
+                <body style="font-family:sans-serif; padding:20px;">
+                    <h2>Hromadný tisk přepravních štítků (${readyOrders.length} ks)</h2>
+                    ${readyOrders.map(o => `
+                        <div style="border:2px solid #000; padding:15px; margin-bottom:15px; page-break-after:always;">
+                            <h3>PŘEPRAVNÍ ŠTÍTEK - ${o.carrier || 'DPD'}</h3>
+                            <p><b>Příjemce:</b> ${o.customerName}</p>
+                            <p><b>Objednávka:</b> ${o.orderId}</p>
+                            <p><b>Tracking:</b> ${o.trackingNumber || 'DPD-LABEL-BULK'}</p>
+                        </div>
+                    `).join('')}
+                    <script>window.print();<\/script>
+                </body></html>
+            `);
+        }
+        showToast(`🖨️ Vygenerováno ${readyOrders.length} štítků pro hromadný tisk.`, 'info');
+    }
+
+    bulkApprovePOs() {
+        const pendingPOs = this.data.purchaseOrders.filter(p => p.status === 'PENDING_APPROVAL');
+        if (pendingPOs.length === 0) {
+            showToast('Žádné nákupní objednávky nečekají na schválení.', 'warning');
+            return;
+        }
+        pendingPOs.forEach(po => {
+            po.status = 'SENT';
+        });
+        showToast(`⚡ Hromadně schváleno a odesláno ${pendingPOs.length} nákupních objednávek!`, 'success');
+        this.render();
     }
 
     runGuidedDemoCycle() {
@@ -1321,6 +1375,14 @@ function setupNavigation() {
             scanInput.value = '';
         };
     }
+
+    // Bulk actions
+    const bulkPrintBtn = document.getElementById('btn-bulk-print-labels');
+    const bulkShipBtn = document.getElementById('btn-bulk-ship-orders');
+    const bulkApproveBtn = document.getElementById('btn-bulk-approve-pos');
+    if (bulkPrintBtn) bulkPrintBtn.onclick = () => window.appState.bulkPrintLabels();
+    if (bulkShipBtn) bulkShipBtn.onclick = () => window.appState.bulkShipReadyOrders();
+    if (bulkApproveBtn) bulkApproveBtn.onclick = () => window.appState.bulkApprovePOs();
 
     // Product search
     const searchInput = document.getElementById('product-search-input');
