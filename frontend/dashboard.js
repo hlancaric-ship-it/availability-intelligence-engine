@@ -604,39 +604,51 @@ function renderApp(app) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${filteredOrders.length > 0 ? filteredOrders.map(ord => {
-                        const isReady = ord.status === 'READY_TO_FULFILL' || ord.status === 'READY_TO_SHIP';
-                        const totalReq = ord.items.reduce((s, i) => s + i.required, 0);
-                        const totalStk = ord.items.reduce((s, i) => s + i.stock, 0);
-                        const shortage = Math.max(0, totalReq - totalStk);
-                        return `
-                            <tr class="table-row-clickable" onclick="window.openOrder('${ord.orderId}')">
-                                <td><b>${ord.orderId}</b><br><small style="color: var(--text-subtle)">${ord.createdAt}</small></td>
-                                <td><b>${ord.customerName}</b></td>
-                                <td>${ord.items.map(it => `<div>${it.productName} &times; <b>${it.required} ks</b></div>`).join('')}</td>
-                                <td><span class="stock-badge-green">${totalStk} ks</span></td>
-                                <td>
-                                    ${shortage > 0 
-                                        ? `<span class="shortage-badge-red" title="Tyto kusy nejsou na vlastním skladě a systém je objednává u dodavatele">Chybí ${shortage} ks</span>` 
-                                        : '<span class="stock-badge-green">0 ks (kompletní)</span>'}
-                                </td>
-                                <td><small style="font-weight: 600;">${ord.estimatedShipDate}</small></td>
-                                <td>
-                                    <span class="status-pill ${isReady ? 'status-ready' : 'status-pending'}">
-                                        ${isReady ? '✓ Připraveno k vyřízení' : '⏳ Čeká na dodání zboží'}
-                                    </span>
-                                </td>
-                                <td>
-                                    ${isReady ? `
-                                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                            <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.appState.printLabel('${ord.orderId}')" title="Vytisknout přepravní štítek">🖨️ Štítek</button>
-                                            <button class="btn-action-red btn-sm" onclick="event.stopPropagation(); window.appState.shipOrder('${ord.orderId}')" class="btn-success">📦 Expedovat</button>
-                                        </div>
-                                    ` : `<button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.openOrder('${ord.orderId}')">Detail &rarr;</button>`}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Žádné objednávky neodpovídají vyhledávání nebo filtru.</td></tr>'}
+                     ${filteredOrders.length > 0 ? filteredOrders.map(ord => {
+                         const isReady = ord.status === 'READY_TO_FULFILL' || ord.status === 'READY_TO_SHIP';
+                         const isShipped = ord.status === 'SHIPPED';
+                         const isWaiting = ord.status === 'WAITING_FOR_STOCK';
+                         const isException = ord.status === 'EXCEPTION';
+                         const totalReq = ord.items.reduce((s, i) => s + i.required, 0);
+                         const totalStk = ord.items.reduce((s, i) => s + i.stock, 0);
+                         const shortage = Math.max(0, totalReq - totalStk);
+
+                         // Status pill
+                         const statusPill = isShipped
+                             ? `<span class="status-pill status-info">📦 Expedováno</span>`
+                             : isReady
+                                 ? `<span class="status-pill status-ready">✓ Připraveno k vyřízení</span>`
+                                 : isException
+                                     ? `<span class="status-pill status-exception">⚠️ Výjimka</span>`
+                                     : `<span class="status-pill status-pending">⏳ Čeká na zboží</span>`;
+
+                         // Action buttons
+                         const actionCell = isReady
+                             ? `<div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.appState.printLabel('${ord.orderId}')" title="Vytisknout přepravní štítek">🖨️ Štítek</button>
+                                    <button class="btn-success btn-sm" onclick="event.stopPropagation(); window.appState.shipOrder('${ord.orderId}')">📦 Expedovat</button>
+                                </div>`
+                             : isShipped
+                                 ? `<span class="text-label" style="color:var(--info-text);">✓ Odesláno</span>`
+                                 : `<button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.openOrder('${ord.orderId}')">Detail →</button>`;
+
+                         return `
+                             <tr class="table-row-clickable" onclick="window.openOrder('${ord.orderId}')">
+                                 <td><b>${ord.orderId}</b><br><small style="color: var(--text-subtle)">${ord.createdAt}</small></td>
+                                 <td><b>${ord.customerName}</b></td>
+                                 <td>${ord.items.map(it => `<div>${it.productName} &times; <b>${it.required} ks</b></div>`).join('')}</td>
+                                 <td><span class="stock-badge-green">${totalStk} ks</span></td>
+                                 <td>
+                                     ${shortage > 0
+                                         ? `<span class="shortage-badge-red" title="Tyto kusy nejsou na vlastním skladě a systém je objednává u dodavatele">Chybí ${shortage} ks</span>`
+                                         : '<span class="stock-badge-green">0 ks (kompletní)</span>'}
+                                 </td>
+                                 <td><small style="font-weight: 600;">${ord.estimatedShipDate}</small></td>
+                                 <td>${statusPill}</td>
+                                 <td>${actionCell}</td>
+                             </tr>
+                         `;
+                     }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Žádné objednávky neodpovídají vyhledávání nebo filtru.</td></tr>'}
                 </tbody>
             </table>
         `;
