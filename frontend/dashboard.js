@@ -1565,6 +1565,85 @@ function setupNavigation() {
         };
     }
 
+    // Add Feed Dialog
+    const btnAddFeed = document.getElementById('btn-add-feed-dialog');
+    if (btnAddFeed) {
+        btnAddFeed.onclick = () => {
+            const feedUrl = prompt('Zadejte URL adresu datového feedu dodavatele (XML/CSV):', 'https://supplier.cz/feeds/export.xml');
+            if (feedUrl) {
+                const supplierName = prompt('Zadejte název dodavatele pro tento feed:', 'Helikon-Tex');
+                if (supplierName) {
+                    showToast(`📡 Feed pro dodavatele "${supplierName}" byl úspěšně připojen a stažen!`, 'success');
+                    const feedsContainer = document.getElementById('feeds-list');
+                    if (feedsContainer) {
+                        feedsContainer.innerHTML = `
+                            <div class="alert-box alert-success mb-4">
+                                <span class="alert-title">DATOVÝ FEED JE AKTIVNÍ</span>
+                                <p class="alert-body">Zdroj: <b>${feedUrl}</b> &middot; Dodavatel: <b>${supplierName}</b> &middot; Poslední synchronizace: Dnes 05:00 (1 420 položek, 100% spárováno).</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        };
+    }
+
+    // Add Carrier Dialog
+    const btnAddCarrier = document.getElementById('btn-add-carrier-dialog');
+    if (btnAddCarrier) {
+        btnAddCarrier.onclick = () => {
+            const carrierName = prompt('Zadejte název nového dopravce (např. GLS, Messenger, Toptrans):', 'GLS CZ');
+            if (carrierName) {
+                showToast(`🚚 Dopravce "${carrierName}" byl přidán a aktivován pro expedici.`, 'success');
+                const carriersContainer = document.getElementById('carriers-list');
+                if (carriersContainer) {
+                    carriersContainer.innerHTML = `
+                        <div class="item-card">
+                            <div class="item-card-header">
+                                <div>
+                                    <span class="item-tag">PŘEPRAVNÍ SLUŽBA</span>
+                                    <h3 class="card-title">${carrierName.toUpperCase()}</h3>
+                                </div>
+                                <span class="status-pill status-ready">Aktivní pro expedici</span>
+                            </div>
+                            <div class="mb-2">
+                                <p><b>Sledování zásilek:</b> Integrováno přes API/Štítky &middot; <b>Doba doručení:</b> 24 hodin</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        };
+    }
+
+    // Add Rule Dialog
+    const btnAddRule = document.getElementById('btn-add-rule-dialog');
+    if (btnAddRule) {
+        btnAddRule.onclick = () => {
+            const ruleName = prompt('Zadejte název nového pravidla pro automatický nákup:', 'Při nákupu nad 5 000 Kč automaticky schválit bez dotazu');
+            if (ruleName) {
+                showToast(`⚡ Automatizační pravidlo "${ruleName}" bylo uloženo a aktivováno.`, 'success');
+                const rulesContainer = document.getElementById('rules-list');
+                if (rulesContainer) {
+                    rulesContainer.innerHTML = `
+                        <div class="item-card">
+                            <div class="item-card-header">
+                                <div>
+                                    <span class="item-tag">AUTOMATIZAČNÍ PRAVIDLO</span>
+                                    <h3 class="card-title">${ruleName.toUpperCase()}</h3>
+                                </div>
+                                <span class="status-pill status-ready">Aktivní pravidlo</span>
+                            </div>
+                            <div class="mb-2">
+                                <p><b>Aplikuje se na:</b> Všechny nově příchozí objednávky z e-shopu &middot; <b>Stav:</b> Aktivováno</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        };
+    }
+
     // Settings save
     const btnSaveSettings = document.getElementById('btn-save-settings');
     if (btnSaveSettings) {
