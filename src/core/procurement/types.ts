@@ -1,3 +1,10 @@
+export interface PaymentInfo {
+    paymentStatus: 'PAID' | 'UNPAID' | 'COD' | 'PARTIALLY_PAID';
+    paymentMethod: 'CARD' | 'BANK_TRANSFER' | 'COD' | 'PAYPAL';
+    paidAmount?: number;
+    totalAmount?: number;
+}
+
 export interface CustomerOrderLine {
     id: string;
     orderId: string;
@@ -8,6 +15,15 @@ export interface CustomerOrderLine {
     ownStockQuantity: number;
     createdAt: string;
     priority?: number;
+    paymentInfo?: PaymentInfo;
+}
+
+export interface StoreStockAdjustmentPayload {
+    sku: string;
+    deltaQuantity: number;
+    newStockLevel: number;
+    reason: 'GOODS_RECEIVED' | 'ORDER_FULFILLED' | 'MANUAL_CORRECTION';
+    syncedAt: string;
 }
 
 export interface SupplierOffer {
