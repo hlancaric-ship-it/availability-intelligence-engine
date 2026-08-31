@@ -389,8 +389,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .main-viewport {
     padding: var(--sp-7) var(--sp-8) 80px;
-    max-width: 1440px;
     width: 100%;
+    max-width: 100%;
 }
 
 .view-section { display: none; }

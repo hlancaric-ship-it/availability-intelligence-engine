@@ -1636,7 +1636,28 @@ function setupNavigation() {
                 const url = document.getElementById('feed-url-input').value;
                 const supp = document.getElementById('feed-supplier-select').value;
                 feedModal.classList.remove('active');
-                showToast(`📡 Feed pro dodavatele "${supp}" byl úspěšně připojen a stažen!`, 'success');
+                
+                const feedsList = document.getElementById('feeds-list');
+                if (feedsList) {
+                    const newCard = document.createElement('div');
+                    newCard.className = 'item-card mb-3';
+                    newCard.style.borderLeft = '4px solid var(--success-text)';
+                    newCard.innerHTML = `
+                        <div class="item-card-header">
+                            <div>
+                                <span class="item-tag">AKTIVNÍ DATOVÝ FEED</span>
+                                <h3 class="card-title">${supp.toUpperCase()}</h3>
+                            </div>
+                            <span class="status-pill status-ready">Synchronizováno</span>
+                        </div>
+                        <div class="mb-2">
+                            <p><b>Zdroj URL:</b> <code>${url}</code></p>
+                            <p><b>Frekvence:</b> Každou hodinu &middot; <b>Položek:</b> 1 420 ks (100% spárováno)</p>
+                        </div>
+                    `;
+                    feedsList.prepend(newCard);
+                }
+                showToast(`📡 Feed pro dodavatele "${supp}" byl úspěšně uplatněn a zapsán!`, 'success');
             };
         };
         if (feedModalClose) feedModalClose.onclick = () => feedModal.classList.remove('active');
@@ -1682,7 +1703,27 @@ function setupNavigation() {
                 e.preventDefault();
                 const name = document.getElementById('carrier-name-input').value;
                 carrierModal.classList.remove('active');
-                showToast(`🚚 Dopravce "${name}" byl úspěšně uplatněn v systému.`, 'success');
+
+                const carriersList = document.getElementById('carriers-list');
+                if (carriersList) {
+                    const newCard = document.createElement('div');
+                    newCard.className = 'item-card mb-3';
+                    newCard.style.borderLeft = '4px solid var(--info-text)';
+                    newCard.innerHTML = `
+                        <div class="item-card-header">
+                            <div>
+                                <span class="item-tag">PŘEPRAVNÍ SLUŽBA</span>
+                                <h3 class="card-title">${name.toUpperCase()}</h3>
+                            </div>
+                            <span class="status-pill status-ready">Aktivní pro expedici</span>
+                        </div>
+                        <div class="mb-2">
+                            <p><b>Sledování zásilek:</b> Integrováno přes API/Štítky &middot; <b>Doba doručení:</b> 24 hodin</p>
+                        </div>
+                    `;
+                    carriersList.prepend(newCard);
+                }
+                showToast(`🚚 Dopravce "${name}" byl vytvořen a zapsán do seznamu.`, 'success');
             };
         };
         if (carrierModalClose) carrierModalClose.onclick = () => carrierModal.classList.remove('active');
@@ -1732,7 +1773,27 @@ function setupNavigation() {
                 e.preventDefault();
                 const name = document.getElementById('rule-name-input').value;
                 ruleModal.classList.remove('active');
-                showToast(`⚡ Pravidlo "${name}" bylo aktivováno v automatizačním jádru.`, 'success');
+
+                const rulesList = document.getElementById('rules-list');
+                if (rulesList) {
+                    const newCard = document.createElement('div');
+                    newCard.className = 'item-card mb-3';
+                    newCard.style.borderLeft = '4px solid var(--brand-red)';
+                    newCard.innerHTML = `
+                        <div class="item-card-header">
+                            <div>
+                                <span class="item-tag">AUTOMATIZAČNÍ PRAVIDLO</span>
+                                <h3 class="card-title">${name.toUpperCase()}</h3>
+                            </div>
+                            <span class="status-pill status-ready">Aktivní pravidlo</span>
+                        </div>
+                        <div class="mb-2">
+                            <p><b>Aplikuje se na:</b> Všechny nově příchozí objednávky z e-shopu &middot; <b>Stav:</b> Aktivováno</p>
+                        </div>
+                    `;
+                    rulesList.prepend(newCard);
+                }
+                showToast(`⚡ Pravidlo "${name}" bylo uloženo a aktivováno.`, 'success');
             };
         };
         if (ruleModalClose) ruleModalClose.onclick = () => ruleModal.classList.remove('active');
