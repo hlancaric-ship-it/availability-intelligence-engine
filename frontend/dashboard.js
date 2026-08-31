@@ -541,7 +541,7 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag" style="color: var(--brand-red)">VÝJIMKA ${exc.id}</span>
-                        <h3 class="card-title">${exc.type}</h3>
+                        <h3 class="card-title">EXC.TYPE}</h3>
                     </div>
                     <span class="status-pill status-exception">Závažnost: ${exc.severity}</span>
                 </div>
@@ -662,7 +662,7 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">NÁKUP U DODAVATELE</span>
-                        <h3 class="card-title">${po.id} &middot; 🏢 ${po.supplier}</h3>
+                        <h3 class="card-title">PO.ID} &MIDDOT; 🏢 ${PO.SUPPLIER}</h3>
                     </div>
                     <span class="status-pill ${po.status === 'RECEIVED' ? 'status-ready' : (po.status === 'SENT' ? 'status-info' : 'status-pending')}">
                         ${po.status === 'RECEIVED' ? 'Vše dorazilo a přiřazeno zákazníkům' : (po.status === 'SENT' ? 'Objednávka odeslána &middot; Čekáme na dodání' : 'Čeká na schválení')}
@@ -697,7 +697,7 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">PŘÍJEM BALÍKU</span>
-                        <h3 class="card-title">Zásilka z nákupu: ${po.id} &middot; ${po.supplier}</h3>
+                        <h3 class="card-title">ZÁSILKA Z NÁKUPU: ${PO.ID} &MIDDOT; ${PO.SUPPLIER}</h3>
                     </div>
                     <span class="status-pill ${po.status === 'RECEIVED' ? 'status-ready' : 'status-pending'}">
                         ${po.status === 'RECEIVED' ? '✓ Zboží přijato a přiřazeno' : 'Čeká na fyzické převzetí balíku'}
@@ -743,7 +743,7 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">INTEGROVANÝ PARTNER</span>
-                        <h3 class="card-title">🏢 ${s.name}</h3>
+                        <h3 class="card-title">S.NAME}</h3>
                     </div>
                     <span class="status-pill status-ready">${s.priority}</span>
                 </div>
@@ -837,7 +837,7 @@ function openOrderDetailModal(order) {
         <!-- 1. Narrative Story of the Order -->
         <div class="story-box">
             <div class="story-header">
-                <span style="font-size: 16px;">📖</span>
+                <span class="card-title">📖</span>
                 <span class="story-title">Příběh vyřízení objednávky</span>
             </div>
             
@@ -883,7 +883,7 @@ function openOrderDetailModal(order) {
         ${order.problem ? `
             <div style="background: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid var(--brand-red); border-radius: var(--radius-md); padding: 16px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="font-size: 16px;">⚠️</span>
+                    <span class="card-title">⚠️</span>
                     <b style="font-size: 13px; text-transform: uppercase; color: var(--brand-red); letter-spacing: 0.05em;">PROBLÉM</b>
                 </div>
                 <p class="fw-bold text-danger-c mb-1">${order.problem.title}</p>
@@ -1003,7 +1003,7 @@ function renderSuppliersManagement(app) {
             <div class="item-card-header">
                 <div>
                     <span class="item-tag">PARTNER č. ${s.priority} · ${s.statusLabel.toUpperCase()}</span>
-                    <h3 class="card-title">🏢 ${s.name}</h3>
+                    <h3 class="card-title">S.NAME}</h3>
                 </div>
                 <span class="status-pill ${s.status === 'ACTIVE' ? 'status-ready' : 'status-pending'}">${s.statusLabel}</span>
             </div>
@@ -1105,7 +1105,7 @@ function renderProductsCatalog(app, searchTerm = '') {
                 <div class="product-catalog-header">
                     <div>
                         <span class="item-tag">PRODUKT</span>
-                        <h3 class="product-main-title">${product.productName}</h3>
+                        <h3 class="product-main-title">PRODUCT.PRODUCTNAME}</h3>
                         <span style="font-size: 12px; color: var(--text-muted);">${allVariants.length} varianty &middot; propojeno na ${totalMappings} dodavatelských záznamů</span>
                     </div>
                 </div>
@@ -1650,7 +1650,7 @@ function renderAvailabilityView(app) {
                     <div class="item-card-header">
                         <div>
                             <span class="item-tag" style="color: var(--brand-red)">VÝJIMKA ${exc.id}</span>
-                            <h3 class="card-title">${exc.type}</h3>
+                            <h3 class="card-title">EXC.TYPE}</h3>
                         </div>
                         <span class="status-pill status-exception">Závažnost: ${exc.severity}</span>
                     </div>
@@ -1853,7 +1853,7 @@ window.openFeedWizard = () => {
             body.innerHTML = `
                 <div style="margin-bottom: 15px;">
                     <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 1/4: IDENTIFIKACE FEEDU</span>
-                    <h4 style="font-size: 16px; margin-top: 4px;">Zadejte základní údaje o feedu dodavatele</h4>
+                    <h4 class="card-title">Zadejte základní údaje o feedu dodavatele</h4>
                     <p style="font-size: 12px; color: var(--text-subtle);">Zadejte název zdroje a URL adresu XML nebo CSV souboru.</p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
@@ -1906,7 +1906,7 @@ window.openFeedWizard = () => {
             body.innerHTML = `
                 <div style="margin-bottom: 15px;">
                     <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 2/4: MAPOVÁNÍ DATOVÝCH POLÍ</span>
-                    <h4 style="font-size: 16px; margin-top: 4px;">Přiřaďte sloupce z feedu na AIE datové entity</h4>
+                    <h4 class="card-title">Přiřaďte sloupce z feedu na AIE datové entity</h4>
                     <p style="font-size: 12px; color: var(--text-subtle);">Zvolte, které elementy feedu odpovídají kódům produktů, cenám a stavu skladu.</p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
@@ -1953,7 +1953,7 @@ window.openFeedWizard = () => {
             body.innerHTML = `
                 <div style="margin-bottom: 15px;">
                     <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 3/4: VALIDACE DATOVÝCH STRUKTUR</span>
-                    <h4 style="font-size: 16px; margin-top: 4px;">Simulace stažení a validace struktury feedu</h4>
+                    <h4 class="card-title">Simulace stažení a validace struktury feedu</h4>
                     <p style="font-size: 12px; color: var(--text-subtle);">Systém zkušebně načetl feed a zkontroloval datové typy.</p>
                 </div>
                 <div style="background: #f0fdf4; border: 1px solid #bdf0c4; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
@@ -1980,7 +1980,7 @@ window.openFeedWizard = () => {
             body.innerHTML = `
                 <div style="margin-bottom: 15px;">
                     <span style="font-size: 11px; font-weight: 700; color: var(--success-text);">KROK 4/4: DATOVÝ ZDROJ JE AKTIVNÍ</span>
-                    <h4 style="font-size: 16px; margin-top: 4px;">Feed byl úspěšně připojen a aktivován</h4>
+                    <h4 class="card-title">Feed byl úspěšně připojen a aktivován</h4>
                     <p style="font-size: 12px; color: var(--text-subtle);">Položky z feedu se nyní pravidelně aktualizují každou hodinu.</p>
                 </div>
                 <div style="background: var(--bg-subtle); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
@@ -2003,7 +2003,7 @@ window.openFeedWizard = () => {
                             <div class="item-card-header">
                                 <div>
                                     <span class="item-tag">AKTIVNÍ DATOVÝ ZDROJ (FEED)</span>
-                                    <h3 class="card-title">📡 ${feedData.name}</h3>
+                                    <h3 class="card-title">FEEDDATA.NAME}</h3>
                                 </div>
                                 <span class="status-pill status-ready">Pravidelný import</span>
                             </div>
@@ -2065,7 +2065,7 @@ window.openCarrierDialog = () => {
                     <div class="item-card-header">
                         <div>
                             <span class="item-tag">PŘIPOJENÝ DOPRAVCE</span>
-                            <h3 class="card-title">🚚 ${name}</h3>
+                            <h3 class="card-title">NAME}</h3>
                         </div>
                         <span class="status-pill status-ready">API Propojeno</span>
                     </div>
@@ -2133,7 +2133,7 @@ window.openRuleDialog = () => {
                     <div class="item-card-header">
                         <div>
                             <span class="item-tag">AKTIVNÍ AUTOMATIZAČNÍ PRAVIDLO</span>
-                            <h3 class="card-title">⚡ ${name}</h3>
+                            <h3 class="card-title">NAME}</h3>
                         </div>
                         <span class="status-pill status-ready">Spouští se</span>
                     </div>
