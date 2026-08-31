@@ -770,7 +770,12 @@ function renderApp(app) {
                              <tr class="table-row-clickable" onclick="window.openOrder('${ord.orderId}')">
                                  <td><b>${ord.orderId}</b><br><small style="color: var(--text-subtle)">${ord.createdAt}</small></td>
                                  <td><b>${ord.customerName}</b></td>
-                                 <td>${ord.items.map(it => `<div>${it.productName} &times; <b>${it.required} ks</b></div>`).join('')}</td>
+                                 <td>${ord.items.map(it => `
+                                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                         <img src="https://placehold.co/36x36/e2e8f0/0f172a?text=${encodeURIComponent(it.sku.slice(0,3))}" alt="${it.productName}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; border:1px solid var(--border-color);" />
+                                         <div><b>${it.productName}</b> &times; <b>${it.required} ks</b></div>
+                                     </div>
+                                 `).join('')}</td>
                                  <td><span class="stock-badge-green">${totalStk} ks</span></td>
                                  <td><b>${totalStk + 5} ks</b> <small style="color: var(--text-subtle)">(volno ${Math.max(0, totalStk + 5 - totalReq)} ks)</small></td>
                                  <td>
@@ -1065,7 +1070,12 @@ function openOrderDetailModal(order) {
                         const freeStock = Math.max(0, totalPhysicalStock - it.required);
                         return `
                         <tr>
-                            <td><b>${it.productName}</b><br><small style="color: var(--text-subtle)">Kód: ${it.sku}</small></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="https://placehold.co/44x44/e2e8f0/0f172a?text=${encodeURIComponent(it.sku.slice(0,3))}" alt="${it.productName}" style="width:44px; height:44px; border-radius:6px; object-fit:cover; border:1px solid var(--border-color);" />
+                                    <div><b>${it.productName}</b><br><small style="color: var(--text-subtle)">Kód: ${it.sku}</small></div>
+                                </div>
+                            </td>
                             <td><b>${it.required} ks</b></td>
                             <td>${it.stock} ks</td>
                             <td><b>${totalPhysicalStock} ks</b> <small style="color: var(--text-subtle)">(volno ${freeStock} ks)</small></td>
