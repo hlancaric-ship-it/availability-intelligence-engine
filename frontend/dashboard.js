@@ -811,7 +811,7 @@ function openOrderDetailModal(order) {
 
         <!-- Explicit Status Checklist -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
-            <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 12px; letter-spacing: 0.05em;">
+            <h4 style="class="subsection-title"">
                 PŘEHLED EXPEDICE & POLOŽEK
             </h4>
             <div class="grid-4">
@@ -837,8 +837,8 @@ function openOrderDetailModal(order) {
         <!-- 1. Narrative Story of the Order -->
         <div class="story-box">
             <div class="story-header">
-                <span class="card-title">📖</span>
-                <span class="story-title">Příběh vyřízení objednávky</span>
+                <span class="card-title"></span>
+                <span class="story-title">PŘÍBĚH VYŘÍZENÍ OBJEDNÁVKY</span>
             </div>
             
             <div class="story-step-item">
@@ -881,7 +881,7 @@ function openOrderDetailModal(order) {
 
         <!-- Problem & System Suggestion Box (If applicable) -->
         ${order.problem ? `
-            <div style="background: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid var(--brand-red); border-radius: var(--radius-md); padding: 16px;">
+            <div class="alert-box alert-danger">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                     <span class="card-title">⚠️</span>
                     <b style="font-size: 13px; text-transform: uppercase; color: var(--brand-red); letter-spacing: 0.05em;">PROBLÉM</b>
@@ -889,7 +889,7 @@ function openOrderDetailModal(order) {
                 <p class="fw-bold text-danger-c mb-1">${order.problem.title}</p>
                 <p class="text-sm text-danger-c mb-3">${order.problem.detail}</p>
                 
-                <div style="background: #ffffff; border: 1px solid #fda4af; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px;">
+                <div class="info-block mt-2">
                     <b style="font-size: 12px; color: var(--brand-red); text-transform: uppercase; display: block; margin-bottom: 4px;">CO SYSTÉM NAVRHUJE</b>
                     <p class="text-base">${order.problem.suggestion}</p>
                 </div>
@@ -911,7 +911,7 @@ function openOrderDetailModal(order) {
 
         <!-- 2. Items Table -->
         <div>
-            <h4 class="subsection-title">Položky zákaznické objednávky</h4>
+            <h4 class="subsection-title">POLOŽKY ZÁKAZNICKÉ OBJEDNÁVKY</h4>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -944,7 +944,7 @@ function openOrderDetailModal(order) {
 
         <!-- 3. Audit Trail -->
         <div>
-            <h4 class="subsection-title">Historie rozhodnutí a audit</h4>
+            <h4 class="subsection-title">HISTORIE ROZHODNUTÍ A AUDIT</h4>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 ${order.auditTrail.map(a => `
                     <div style="background: var(--bg-subtle); padding: 8px 12px; border-radius: var(--radius-sm); border-left: 3px solid ${a.actor === 'USER' ? 'var(--brand-red)' : 'var(--info-text)'}; font-size: 12px;">
@@ -958,7 +958,7 @@ function openOrderDetailModal(order) {
 
         <!-- 3.5 Order Notes -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
-            <h4 class="subsection-title">Poznámky k objednávce</h4>
+            <h4 class="subsection-title">POZNÁMKY K OBJEDNÁVCE</h4>
             <div id="order-notes-list" style="margin-bottom: 10px; color: var(--text-muted);">
                 ${order.notes && order.notes.length > 0 ? order.notes.map(n => `<div style="padding: 6px; background: var(--bg-subtle); border-radius: 4px; margin-bottom: 4px;"><b>E-shopař:</b> ${n}</div>`).join('') : 'Žádné poznámky.'}
             </div>
