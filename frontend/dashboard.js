@@ -394,18 +394,34 @@ class AppState {
         const labelWindow = window.open('', '_blank', 'width=420,height=320,toolbar=no,menubar=no');
         if (labelWindow) {
             labelWindow.document.write(`
-                <html><head><title>Štítek — ${orderId}</title>
-                <style>body{font-family:monospace;padding:20px;background:#fff;} .box{border:3px solid #000;padding:16px;} .big{font-size:24px;font-weight:900;} .barcode{font-size:48px;letter-spacing:4px;margin:12px 0;} hr{border-color:#000;}</style>
+                <html><head><title>Štítek & Balicí list — ${orderId}</title>
+                <style>
+                    body{font-family:sans-serif;padding:15px;background:#fff;color:#000;} 
+                    .box{border:3px solid #000;padding:16px;border-radius:8px;} 
+                    .big{font-size:26px;font-weight:900;text-transform:uppercase;} 
+                    .barcode{font-size:28px;font-family:monospace;letter-spacing:2px;margin:10px 0;background:#f1f5f9;padding:6px;text-align:center;} 
+                    .picklist{margin-top:14px;border-top:2px dashed #000;padding-top:10px;background:#fafafa;padding:10px;border-radius:6px;}
+                    .picklist-header{font-size:12px;font-weight:900;text-transform:uppercase;margin-bottom:6px;}
+                    .picklist-item{font-size:13px;font-weight:700;margin-bottom:4px;}
+                    hr{border-color:#000;}
+                </style>
                 </head><body>
                 <div class="box">
-                    <div style="font-size:11px;text-transform:uppercase;">Odesílatel: Váš E-shop s.r.o.</div>
+                    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;">
+                        <span>DOPRAVCE: ${carrier}</span>
+                        <span>OBJEDNÁVKA: ${orderId}</span>
+                    </div>
                     <hr/>
                     <div class="big">${carrier}</div>
-                    <div class="barcode">|||||| ${tracking} ||||||</div>
-                    <hr/>
+                    <div class="barcode">||||| ${tracking} |||||</div>
                     <div><b>Příjemce:</b> ${ord.customerName}</div>
-                    <div style="margin-top:8px;font-size:11px;">Objednávka: ${orderId} · ${ord.items.map(i => i.productName + ' ×' + i.required).join(', ')}</div>
-                    <div style="margin-top:12px;font-size:10px;color:#666;">[DEMO ŠTÍTEK — není reálný tisk]</div>
+                    
+                    <!-- BALICÍ SOUPISKA (PICKLIST) PŘÍMO NA ŠTÍTKU -->
+                    <div class="picklist">
+                        <div class="picklist-header">📦 BALICÍ SOUPISKA (CO PATŘÍ DO TOHOTO BALÍKU):</div>
+                        ${ord.items.map(i => `<div class="picklist-item">▪ <b>${i.required}x</b> ${i.productName} <small style="color:#555;">[SKU: ${i.sku}]</small></div>`).join('')}
+                    </div>
+                    <div style="margin-top:10px;font-size:10px;color:#666;text-align:center;">AIE 2.0 Operational Shipping Label</div>
                 </div>
                 <script>window.print();<\/script>
                 </body></html>`);
