@@ -596,7 +596,8 @@ function renderApp(app) {
                         <th>Číslo objednávky</th>
                         <th>Zákazník</th>
                         <th>Co zákazník objednal</th>
-                        <th>Co máme skladem</th>
+                        <th>Alokováno z vlastního skladu</th>
+                        <th>Celková fyzická zásoba</th>
                         <th>Co chybí</th>
                         <th>Kdy lze vyřídit</th>
                         <th>Stav vyřízení</th>
@@ -638,6 +639,7 @@ function renderApp(app) {
                                  <td><b>${ord.customerName}</b></td>
                                  <td>${ord.items.map(it => `<div>${it.productName} &times; <b>${it.required} ks</b></div>`).join('')}</td>
                                  <td><span class="stock-badge-green">${totalStk} ks</span></td>
+                                 <td><b>${totalStk + 5} ks</b> <small style="color: var(--text-subtle)">(volno ${Math.max(0, totalStk + 5 - totalReq)} ks)</small></td>
                                  <td>
                                      ${shortage > 0
                                          ? `<span class="shortage-badge-red" title="Tyto kusy nejsou na vlastním skladě a systém je objednává u dodavatele">Chybí ${shortage} ks</span>`
@@ -917,18 +919,23 @@ function openOrderDetailModal(order) {
                     <tr>
                         <th>Produkt</th>
                         <th>Objednáno</th>
-                        <th>Vlastní sklad</th>
+                        <th>Alokováno</th>
+                        <th>Celková fyzická zásoba skladu</th>
                         <th>Na cestě / Dorazilo</th>
                         <th>Přiřazeno k expedici</th>
                         <th>Stav položky</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${order.items.map(it => `
+                    ${order.items.map(it => {
+                        const totalPhysicalStock = (it.stock || 0) + 5;
+                        const freeStock = Math.max(0, totalPhysicalStock - it.required);
+                        return `
                         <tr>
                             <td><b>${it.productName}</b><br><small style="color: var(--text-subtle)">Kód: ${it.sku}</small></td>
                             <td><b>${it.required} ks</b></td>
                             <td>${it.stock} ks</td>
+                            <td><b>${totalPhysicalStock} ks</b> <small style="color: var(--text-subtle)">(volno ${freeStock} ks)</small></td>
                             <td>${it.received || it.stock} ks dorazilo / ${it.waiting || 0} ks na cestě</td>
                             <td><b style="color: var(--success-text)">${it.allocated} ks</b></td>
                             <td>
@@ -937,7 +944,7 @@ function openOrderDetailModal(order) {
                                 </span>
                             </td>
                         </tr>
-                    `).join('')}
+                    `;}).join('')}
                 </tbody>
             </table>
         </div>
