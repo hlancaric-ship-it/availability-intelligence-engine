@@ -43,6 +43,7 @@
                 <button class="nav-item" data-view="availability">
                     <span class="nav-icon">📊</span>
                     <span class="nav-label">Dostupnost</span>
+                    <span class="nav-badge alert-count" id="sidebar-exceptions-count">2</span>
                 </button>
                 <button class="nav-item" data-view="procurement">
                     <span class="nav-icon">🛒</span>
@@ -59,6 +60,10 @@
                     <span class="nav-icon">🏢</span>
                     <span class="nav-label">Dodavatelé</span>
                 </button>
+                <button class="nav-item" data-view="products">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-label">Produkty & Mapování</span>
+                </button>
                 <button class="nav-item" data-view="feeds">
                     <span class="nav-icon">📡</span>
                     <span class="nav-label">Feedy</span>
@@ -70,6 +75,10 @@
                 <button class="nav-item" data-view="rules">
                     <span class="nav-icon">⚡</span>
                     <span class="nav-label">Pravidla</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Nastavení nákupu</span>
                 </button>
                 <button class="nav-item" data-view="audit">
                     <span class="nav-icon">📝</span>
@@ -252,47 +261,47 @@
                 </section>
 
                 <!-- VIEW 2: AVAILABILITY / DEFICIT ANALYSIS -->
-                <section class=”view-section” id=”view-availability”>
-                    <div class=”context-banner banner-danger”>
-                        <div class=”context-grid”>
-                            <div class=”context-col”>
-                                <span class=”context-label”>📌 CO SE DĚJE</span>
-                                <p class=”context-text”>Analýza deficitů skladem a navrhovaná řešení. Systém ukazuje, které objednávky mají problém s dostupností.</p>
+                <section class="view-section" id="view-availability">
+                    <div class="context-banner banner-danger">
+                        <div class="context-grid">
+                            <div class="context-col">
+                                <span class="context-label">📌 CO SE DĚJE</span>
+                                <p class="context-text">Analýza deficitů skladem a navrhovaná řešení. Systém ukazuje, které objednávky mají problém s dostupností.</p>
                             </div>
-                            <div class=”context-col”>
-                                <span class=”context-label”>👁️ PROČ TO VIDÍTE</span>
-                                <p class=”context-text”>Abyste měli přehled o situacích, kde chybí zboží nebo se musí objednat u dodavatele.</p>
+                            <div class="context-col">
+                                <span class="context-label">👁️ PROČ TO VIDÍTE</span>
+                                <p class="context-text">Abyste měli přehled o situacích, kde chybí zboží nebo se musí objednat u dodavatele.</p>
                             </div>
-                            <div class=”context-col”>
-                                <span class=”context-label”>👉 CO MÁTE UDĚLAT</span>
-                                <p class=”context-text”>Ověřte, že AIE vybral správného dodavatele, nebo intervenujte — vyberte jiného partnera či upravte množství.</p>
+                            <div class="context-col">
+                                <span class="context-label">👉 CO MÁTE UDĚLAT</span>
+                                <p class="context-text">Ověřte, že AIE vybral správného dodavatele, nebo intervenujte — vyberte jiného partnera či upravte množství.</p>
                             </div>
-                            <div class=”context-col”>
-                                <span class=”context-label”>⚡ CO SE STANE POTOM</span>
-                                <p class=”context-text”>Systém přepočítá nákup podle vašeho rozhodnutí a položka se přesune k čekajícím na dodání.</p>
+                            <div class="context-col">
+                                <span class="context-label">⚡ CO SE STANE POTOM</span>
+                                <p class="context-text">Systém přepočítá nákup podle vašeho rozhodnutí a položka se přesune k čekajícím na dodání.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class=”section-card” style=”margin-bottom: 24px;”>
-                        <div class=”section-card-header”>
+                    <div class="section-card" style="margin-bottom: 24px;">
+                        <div class="section-card-header">
                             <div>
-                                <h2 class=”section-card-title text-danger”>⚠️ Objednávky s deficity (vyžadují řešení)</h2>
-                                <p class=”section-card-subtitle”>Každá položka ukazuje, co chybí, proč je to potřeba objednat a co AIE navrhuje:</p>
+                                <h2 class="section-card-title text-danger">⚠️ Objednávky s deficity (vyžadují řešení)</h2>
+                                <p class="section-card-subtitle">Každá položka ukazuje, co chybí, proč je to potřeba objednat a co AIE navrhuje:</p>
                             </div>
                         </div>
-                        <div id=”full-exceptions-list” class=”exceptions-full-list”></div>
+                        <div id="full-exceptions-list" class="exceptions-full-list"></div>
                     </div>
 
                     <!-- Audit log of system decisions -->
-                    <div class=”section-card”>
-                        <div class=”section-card-header”>
+                    <div class="section-card">
+                        <div class="section-card-header">
                             <div>
-                                <h2 class=”section-card-title”>📝 Rozhodovací řetězec (Audit Trail)</h2>
-                                <p class=”section-card-subtitle”>Co systém detekoval, jak vyhodnotil dodavatele a jaké rozhodnutí provedl:</p>
+                                <h2 class="section-card-title">📝 Rozhodovací řetězec (Audit Trail)</h2>
+                                <p class="section-card-subtitle">Co systém detekoval, jak vyhodnotil dodavatele a jaké rozhodnutí provedl:</p>
                             </div>
                         </div>
-                        <div id=”interventions-audit-list”></div>
+                        <div id="interventions-audit-list"></div>
                     </div>
                 </section>
 
@@ -320,10 +329,21 @@
                     </div>
 
                     <div class="section-card">
-                        <div class="section-card-header">
-                            <div>
-                                <h2 class="section-card-title">📦 Zákaznické objednávky & stav expedice</h2>
-                                <p class="section-card-subtitle">Kliknutím na řádek otevřete detailní příběh a možnosti ručních úprav.</p>
+                        <div class="section-card-header" style="flex-direction: column; align-items: stretch; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="section-card-title">📦 Zákaznické objednávky & stav expedice</h2>
+                                    <p class="section-card-subtitle">Kliknutím na řádek otevřete detailní příběh a možnosti ručních úprav.</p>
+                                </div>
+                            </div>
+                            <!-- Search & filters -->
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <input type="text" id="order-search-input" placeholder="🔍 Hledat objednávku podle čísla nebo jména..." style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px;">
+                                <div style="display: flex; gap: 6px;" id="order-filters-container">
+                                    <button class="btn-secondary btn-sm active-filter" data-filter="ALL" style="background: var(--brand-red); color: white; border: 1px solid var(--brand-red);">Všechny</button>
+                                    <button class="btn-secondary btn-sm" data-filter="READY" style="background: #ffffff; color: var(--text-main); border: 1px solid var(--border-color);">K expedici</button>
+                                    <button class="btn-secondary btn-sm" data-filter="WAITING" style="background: #ffffff; color: var(--text-main); border: 1px solid var(--border-color);">Čekající na zboží</button>
+                                </div>
                             </div>
                         </div>
                         <div id="full-orders-list" class="orders-table-wrapper"></div>
@@ -692,6 +712,54 @@
             </div>
             <div class="modal-body" id="modal-body">
                 <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Feed Wizard Modal -->
+    <div id="feed-modal" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 700px;">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-eyebrow">PŘIPOJENÍ NOVÉHO ZDROJE DAT</span>
+                    <h3 class="modal-title">Průvodce přidáním feedu</h3>
+                </div>
+                <button class="modal-close" id="feed-modal-close-btn" title="Zavřít okno">&times;</button>
+            </div>
+            <div class="modal-body" id="feed-modal-body">
+                <!-- Injected Wizard Flow -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Carrier Modal -->
+    <div id="carrier-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-eyebrow">PŘEPRAVNÍ SLUŽBY</span>
+                    <h3 class="modal-title">Přidat dopravce</h3>
+                </div>
+                <button class="modal-close" id="carrier-modal-close-btn" title="Zavřít okno">&times;</button>
+            </div>
+            <div class="modal-body" id="carrier-modal-body">
+                <!-- Injected Carrier Form -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Rule Modal -->
+    <div id="rule-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-eyebrow">AUTOMATIZACE NÁKUPU</span>
+                    <h3 class="modal-title">Nové automatizační pravidlo</h3>
+                </div>
+                <button class="modal-close" id="rule-modal-close-btn" title="Zavřít okno">&times;</button>
+            </div>
+            <div class="modal-body" id="rule-modal-body">
+                <!-- Injected Rule Form -->
             </div>
         </div>
     </div>

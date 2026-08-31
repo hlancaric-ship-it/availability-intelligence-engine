@@ -151,9 +151,36 @@ const InitialState = {
         },
     ],
     suppliers: [
-        { name: 'Fox Outdoor', priority: '1. Hlavní partner', leadTime: '1-2 dny', reliability: '99%', minOrder: 'Bez limitu (0 Kč)', note: 'Primární dodavatel pro textil a outdoor vybavení.' },
-        { name: 'Helikon-Tex', priority: '2. Specializovaný partner', leadTime: '2-3 dny', reliability: '98%', minOrder: '500 Kč', note: 'Specialista na zdravotnický materiál a taktickou výstroj.' },
-        { name: 'Brandit CZ', priority: '3. Záložní dodavatel', leadTime: '3-4 dny', reliability: '95%', minOrder: '1 000 Kč', note: 'Aktivován při výpadku skladu u hlavních partnerů (rozdělení nákupu).' },
+        {
+            id: 'SUP-FOX', name: 'Fox Outdoor', status: 'ACTIVE', statusLabel: 'Aktivní partner',
+            categoryDescription: 'Textil, outdoor oblečení, základní sortiment',
+            priority: 1, leadTimeDays: 1, leadTimeLabel: '1–2 pracovní dny',
+            minOrderAmountCzk: 0, minOrderLabel: 'Bez limitu (0 Kč)',
+            orderMethod: 'XML feed + e-mail potvrzení',
+            lastCatalogSync: 'Dnes, 08:15 (125 SKU)',
+            mappedProductsCount: 48,
+            note: 'Primární dodavatel pro textil a outdoor vybavení. Nejvyšší spolehlivost doručení (99%).',
+        },
+        {
+            id: 'SUP-HELIKON', name: 'Helikon-Tex', status: 'ACTIVE', statusLabel: 'Aktivní partner',
+            categoryDescription: 'Zdravotnický materiál, taktická výstroj',
+            priority: 2, leadTimeDays: 2, leadTimeLabel: '2–3 pracovní dny',
+            minOrderAmountCzk: 500, minOrderLabel: 'Min. 500 Kč',
+            orderMethod: 'CSV ceník + e-mail',
+            lastCatalogSync: 'Včera, 22:00 (87 SKU)',
+            mappedProductsCount: 21,
+            note: 'Specialista na zdravotnický materiál. Aktivní pro obinadla, dlahy, obvazy a taktické vybavení.',
+        },
+        {
+            id: 'SUP-BRANDIT', name: 'Brandit CZ', status: 'ACTIVE', statusLabel: 'Aktivní partner',
+            categoryDescription: 'Batohy, taktické příslušenství, záložní sortiment',
+            priority: 3, leadTimeDays: 3, leadTimeLabel: '3–4 pracovní dny',
+            minOrderAmountCzk: 1000, minOrderLabel: 'Min. 1 000 Kč',
+            orderMethod: 'E-mail s tabulkou objednávky',
+            lastCatalogSync: 'Dnes, 07:45 (203 SKU)',
+            mappedProductsCount: 34,
+            note: 'Záložní partner — aktivován při výpadku skladu hlavních dodavatelů nebo pro rozdělení nákupu.',
+        },
     ],
 };
 
@@ -163,10 +190,14 @@ class AppState {
         this.data = JSON.parse(JSON.stringify(InitialState));
         this.currentView = 'dashboard';
         this.selectedOrder = null;
+        this.orderSearchQuery = '';
+        this.orderFilter = 'ALL';
     }
 
     reset() {
         this.data = JSON.parse(JSON.stringify(InitialState));
+        this.orderSearchQuery = '';
+        this.orderFilter = 'ALL';
         this.render();
         showToast('Demo data byla úspěšně resetována do výchozího stavu.', 'success');
     }
@@ -279,6 +310,86 @@ class AppState {
         }
     }
 
+    addOrderNote(orderId) {
+        const ord = this.data.customerOrders.find(o => o.orderId === orderId);
+        const input = document.getElementById('new-note-input');
+        if (ord && input && input.value.trim()) {
+            const noteText = input.value.trim();
+            if (!ord.notes) ord.notes = [];
+            ord.notes.push(noteText);
+            ord.auditTrail.unshift({
+                time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+                actor: 'USER',
+                action: `Přidána poznámka k objednávce: "${noteText}".`,
+            });
+            this.render();
+            if (this.selectedOrder && this.selectedOrder.orderId === orderId) {
+                openOrderDetailModal(ord);
+            }
+            showToast('Poznámka byla přidána a uložena.', 'success');
+        }
+    }
+
+    shipOrder(orderId) {
+        const ord = this.data.customerOrders.find(o => o.orderId === orderId);
+        if (!ord) return;
+        const carriers = ['DPD', 'Zásilkovna', 'PPL', 'Česká pošta'];
+        const carrier = carriers[Math.floor(Math.random() * carriers.length)];
+        const trackingNumber = `${carrier.replace(/\s/g, '').toUpperCase().slice(0,3)}-${Date.now().toString().slice(-9)}`;
+        ord.status = 'SHIPPED';
+        ord.carrier = carrier;
+        ord.trackingNumber = trackingNumber;
+        ord.trackingInfo = `Zásilka byla předána dopravci ${carrier}. Zákazník byl informován e-mailem.`;
+        ord.estimatedShipDate = 'Expedováno';
+        ord.auditTrail.unshift({
+            time: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+            actor: 'USER',
+            action: `Objednávka expedována. Dopravce: ${carrier} · Číslo zásilky: ${trackingNumber}`,
+        });
+        this.addToGlobalAudit({
+            targetType: 'SYSTEM_ACTION',
+            targetId: orderId,
+            originalValue: 'Připraveno k expedici',
+            newValue: `Expedováno — ${carrier} (${trackingNumber})`,
+            reason: 'E-shopař potvrdil předání zásilky dopravci.',
+            user: 'E-shopař',
+        });
+        this.render();
+        if (this.selectedOrder && this.selectedOrder.orderId === orderId) {
+            openOrderDetailModal(ord);
+        }
+        showToast(`📦 Objednávka ${orderId} expedována! Dopravce: ${carrier} · Zásilka: ${trackingNumber}`, 'success');
+    }
+
+    printLabel(orderId) {
+        const ord = this.data.customerOrders.find(o => o.orderId === orderId);
+        if (!ord) return;
+        const carrier = ord.carrier || 'DPD';
+        const tracking = ord.trackingNumber || `LABEL-${Date.now().toString().slice(-8)}`;
+        // Simulate label print dialog
+        const labelWindow = window.open('', '_blank', 'width=420,height=320,toolbar=no,menubar=no');
+        if (labelWindow) {
+            labelWindow.document.write(`
+                <html><head><title>Štítek — ${orderId}</title>
+                <style>body{font-family:monospace;padding:20px;background:#fff;} .box{border:3px solid #000;padding:16px;} .big{font-size:24px;font-weight:900;} .barcode{font-size:48px;letter-spacing:4px;margin:12px 0;} hr{border-color:#000;}</style>
+                </head><body>
+                <div class="box">
+                    <div style="font-size:11px;text-transform:uppercase;">Odesílatel: Váš E-shop s.r.o.</div>
+                    <hr/>
+                    <div class="big">${carrier}</div>
+                    <div class="barcode">|||||| ${tracking} ||||||</div>
+                    <hr/>
+                    <div><b>Příjemce:</b> ${ord.customerName}</div>
+                    <div style="margin-top:8px;font-size:11px;">Objednávka: ${orderId} · ${ord.items.map(i => i.productName + ' ×' + i.required).join(', ')}</div>
+                    <div style="margin-top:12px;font-size:10px;color:#666;">[DEMO ŠTÍTEK — není reálný tisk]</div>
+                </div>
+                <script>window.print();<\/script>
+                </body></html>`);
+            labelWindow.document.close();
+        }
+        showToast(`🖨️ Štítek pro ${orderId} (${carrier}) odeslán na tiskárnu.`, 'success');
+    }
+
     runGuidedDemoCycle() {
         showToast('⚡ Krok 1/3: Schvaluji nákupní objednávky u dodavatelů...', 'info');
         this.approveAllPOs();
@@ -369,7 +480,7 @@ function renderApp(app) {
                 </div>
             </div>
         `).join('')}
-    ` : '<div style="padding: 20px; text-align: center; color: var(--text-subtle); font-size: 13px;">Všechny nákupy jsou schválené. Žádné objednávky nečekají.</div>';
+    ` : '<div style="padding: 20px; text-align: center; color: var(--text-subtle);">Všechny nákupy jsou schválené. Žádné objednávky nečekají.</div>';
 
     // 4. Dashboard Column 2: Exceptions
     const exceptionsListEl = document.getElementById('exceptions-list');
@@ -393,7 +504,7 @@ function renderApp(app) {
                 <span class="action-hint-text">Předá položku k přepočtu s alternativním dodavatelem.</span>
             </div>
         </div>
-    `).join('') : '<div style="padding: 20px; text-align: center; color: var(--success-text); font-size: 13px;">Žádné výjimky. Vše běží v pořádku.</div>';
+    `).join('') : '<div style="padding: 20px; text-align: center; color: var(--success-text);">Žádné výjimky. Vše běží v pořádku.</div>';
 
     // 5. Dashboard Column 3: Ready to ship
     const readyListEl = document.getElementById('ready-list');
@@ -411,11 +522,16 @@ function renderApp(app) {
                 <span>${ord.items.map(it => `${it.productName} (${it.required} ks)`).join(', ')}</span><br>
                 <small style="color: var(--success-text); font-weight: 700;">Expedice: ${ord.estimatedShipDate}</small>
             </div>
-            <div class="item-action-area">
-                <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">👉 Otevřít detail a expedovat &rarr;</span>
+            <div class="item-action-area" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.appState.printLabel('${ord.orderId}')" title="Vytisknout přepravní štítek">
+                    🖨️ Vytisknout štítek
+                </button>
+                <button class="btn-action-red btn-sm" onclick="event.stopPropagation(); window.appState.shipOrder('${ord.orderId}')" class="btn-success">
+                    📦 Expedovat
+                </button>
             </div>
         </div>
-    `).join('') : '<div style="padding: 20px; text-align: center; color: var(--text-subtle); font-size: 13px;">Žádné objednávky nečekají na zabalení.</div>';
+    `).join('') : '<div style="padding: 20px; text-align: center; color: var(--text-subtle);">Žádné objednávky nečekají na zabalení.</div>';
 
     // 6. View: Full Exceptions List
     const fullExcEl = document.getElementById('full-exceptions-list');
@@ -425,16 +541,16 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag" style="color: var(--brand-red)">VÝJIMKA ${exc.id}</span>
-                        <h3 style="font-size: 16px; margin-top: 2px;">${exc.type}</h3>
+                        <h3 class="card-title">${exc.type}</h3>
                     </div>
                     <span class="status-pill status-exception">Závažnost: ${exc.severity}</span>
                 </div>
-                <div style="margin: 10px 0; font-size: 13px;">
+                <div class="mb-3">
                     <p style="margin-bottom: 6px;"><b>Popis problému:</b> ${exc.detail}</p>
                     <p style="margin-bottom: 6px; color: var(--text-muted);"><b>Proč vznikl:</b> ${exc.cause}</p>
-                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: 10px; margin-top: 8px;">
-                        <b style="color: var(--brand-red); font-size: 12px; text-transform: uppercase;">Co systém navrhuje:</b>
-                        <p style="font-size: 13px; color: #991b1b; margin-top: 2px;">${exc.suggestion}</p>
+                    <div class="alert-box alert-danger mt-2">
+                        <span class="alert-title">Co systém navrhuje:</span>
+                        <p class="alert-body">${exc.suggestion}</p>
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
@@ -455,6 +571,24 @@ function renderApp(app) {
     // 7. View: Full Customer Orders
     const fullOrdersEl = document.getElementById('full-orders-list');
     if (fullOrdersEl) {
+        let filteredOrders = d.customerOrders;
+
+        // Apply Search Query
+        if (app.orderSearchQuery && app.orderSearchQuery.trim()) {
+            const query = app.orderSearchQuery.toLowerCase();
+            filteredOrders = filteredOrders.filter(ord => 
+                ord.orderId.toLowerCase().includes(query) || 
+                ord.customerName.toLowerCase().includes(query)
+            );
+        }
+
+        // Apply Filter State
+        if (app.orderFilter === 'READY') {
+            filteredOrders = filteredOrders.filter(ord => ord.status === 'READY_TO_FULFILL' || ord.status === 'READY_TO_SHIP');
+        } else if (app.orderFilter === 'WAITING') {
+            filteredOrders = filteredOrders.filter(ord => ord.status === 'WAITING_FOR_STOCK');
+        }
+
         fullOrdersEl.innerHTML = `
             <table class="data-table">
                 <thead>
@@ -470,7 +604,7 @@ function renderApp(app) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${d.customerOrders.map(ord => {
+                    ${filteredOrders.length > 0 ? filteredOrders.map(ord => {
                         const isReady = ord.status === 'READY_TO_FULFILL' || ord.status === 'READY_TO_SHIP';
                         const totalReq = ord.items.reduce((s, i) => s + i.required, 0);
                         const totalStk = ord.items.reduce((s, i) => s + i.stock, 0);
@@ -493,11 +627,16 @@ function renderApp(app) {
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.openOrder('${ord.orderId}')">Detail &rarr;</button>
+                                    ${isReady ? `
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                            <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.appState.printLabel('${ord.orderId}')" title="Vytisknout přepravní štítek">🖨️ Štítek</button>
+                                            <button class="btn-action-red btn-sm" onclick="event.stopPropagation(); window.appState.shipOrder('${ord.orderId}')" class="btn-success">📦 Expedovat</button>
+                                        </div>
+                                    ` : `<button class="btn-secondary btn-sm" onclick="event.stopPropagation(); window.openOrder('${ord.orderId}')">Detail &rarr;</button>`}
                                 </td>
                             </tr>
                         `;
-                    }).join('')}
+                    }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Žádné objednávky neodpovídají vyhledávání nebo filtru.</td></tr>'}
                 </tbody>
             </table>
         `;
@@ -511,18 +650,18 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">NÁKUP U DODAVATELE</span>
-                        <h3 style="font-size: 16px;">${po.id} &middot; 🏢 ${po.supplier}</h3>
+                        <h3 class="card-title">${po.id} &middot; 🏢 ${po.supplier}</h3>
                     </div>
                     <span class="status-pill ${po.status === 'RECEIVED' ? 'status-ready' : (po.status === 'SENT' ? 'status-info' : 'status-pending')}">
                         ${po.status === 'RECEIVED' ? 'Vše dorazilo a přiřazeno zákazníkům' : (po.status === 'SENT' ? 'Objednávka odeslána &middot; Čekáme na dodání' : 'Čeká na schválení')}
                     </span>
                 </div>
-                <div style="margin: 10px 0; font-size: 13px;">
+                <div class="mb-3">
                     <p><b>Položky:</b> ${po.itemsCount} položek (${po.totalPcs} ks) &middot; <b>Předpokládané doručení:</b> ${po.eta}</p>
                     <p style="color: var(--text-muted); margin-top: 2px;"><b>Pro které zákazníky:</b> ${po.targetOrders}</p>
                     <p style="color: var(--text-muted); margin-top: 2px;"><b>Proč to objednáváme:</b> ${po.reason}</p>
                 </div>
-                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <div class="card-actions">
                     ${po.status === 'PENDING_APPROVAL' ? `
                         <button class="btn-action-red btn-sm" onclick="window.appState.approvePO('${po.id}')">
                             ✓ Schválit nákup u ${po.supplier}
@@ -546,13 +685,13 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">PŘÍJEM BALÍKU</span>
-                        <h3 style="font-size: 16px;">Zásilka z nákupu: ${po.id} &middot; ${po.supplier}</h3>
+                        <h3 class="card-title">Zásilka z nákupu: ${po.id} &middot; ${po.supplier}</h3>
                     </div>
                     <span class="status-pill ${po.status === 'RECEIVED' ? 'status-ready' : 'status-pending'}">
                         ${po.status === 'RECEIVED' ? '✓ Zboží přijato a přiřazeno' : 'Čeká na fyzické převzetí balíku'}
                     </span>
                 </div>
-                <div style="margin: 10px 0; font-size: 13px;">
+                <div class="mb-3">
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: var(--bg-subtle); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 8px;">
                         <div>
                             <span style="color: var(--text-subtle); display: block; font-size: 11px;">Co jsme objednali:</span>
@@ -592,11 +731,11 @@ function renderApp(app) {
                 <div class="item-card-header">
                     <div>
                         <span class="item-tag">INTEGROVANÝ PARTNER</span>
-                        <h3 style="font-size: 16px;">🏢 ${s.name}</h3>
+                        <h3 class="card-title">🏢 ${s.name}</h3>
                     </div>
                     <span class="status-pill status-ready">${s.priority}</span>
                 </div>
-                <div style="margin: 8px 0; font-size: 13px;">
+                <div class="mb-2">
                     <p><b>Dodací lhůta:</b> ${s.leadTime} &middot; <b>Spolehlivost doručení:</b> ${s.reliability} &middot; <b>Minimální nákup:</b> ${s.minOrder}</p>
                     <p style="color: var(--text-muted); margin-top: 4px; font-size: 12px;">${s.note}</p>
                 </div>
@@ -622,12 +761,48 @@ function openOrderDetailModal(order) {
     const isReady = order.status === 'READY_TO_FULFILL' || order.status === 'READY_TO_SHIP' || shortage === 0;
 
     body.innerHTML = `
+        <!-- FULFILLMENT ACTION BAR — only for ready orders -->
+        ${isReady ? `
+        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #15803d; margin-bottom: 4px;">✅ PŘIPRAVENO K EXPEDICI</div>
+                <div style="font-size: 14px; font-weight: 700; color: #14532d;">Všechny položky jsou na skladě a přiřazeny. Objednávka čeká na zabalení a předání dopravci.</div>
+                <div style="font-size: 12px; color: #166534; margin-top: 4px;">Expedice: <b>${order.estimatedShipDate}</b></div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button class="btn-secondary btn-sm" style="background:#fff; border-color:#16a34a; color:#15803d; font-weight:700;" onclick="window.appState.printLabel('${order.orderId}')">
+                    🖨️ Vytisknout štítek
+                </button>
+                <button class="btn-action-red btn-sm" style="background:#16a34a; border-color:#16a34a; font-size:13px; padding: 10px 20px;" onclick="window.appState.shipOrder('${order.orderId}')">
+                    🚚 Expedovat — Předat dopravci
+                </button>
+            </div>
+        </div>
+        ` : order.status === 'SHIPPED' ? `
+        <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 32px;">📦</span>
+            <div>
+                <div class="alert-title text-info-c">EXPEDOVÁNO</div>
+                <div style="font-size: 14px; font-weight: 700; color: #1e3a8a;">${order.trackingInfo || 'Zásilka předána dopravci.'}</div>
+                <div style="font-size: 12px; color: #1d4ed8; margin-top: 4px;">Dopravce: <b>${order.carrier || 'DPD'}</b> · Číslo zásilky: <b>${order.trackingNumber || '—'}</b></div>
+            </div>
+        </div>
+        ` : `
+        <div style="background: #fffbeb; border: 2px solid #f59e0b; border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 28px;">⏳</span>
+            <div>
+                <div class="alert-title text-warning-c">ČEKÁ NA DOPLNĚNÍ SKLADU</div>
+                <div style="color: #78350f;">Systém objednal chybějící zboží u dodavatele. Objednávku expedujete hned po doručení balíku.</div>
+            </div>
+        </div>
+        `}
+
         <!-- Explicit Status Checklist -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
             <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 12px; letter-spacing: 0.05em;">
                 PŘEHLED EXPEDICE & POLOŽEK
             </h4>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 12px;">
+            <div class="grid-4">
                 <div style="background: var(--bg-subtle); padding: 10px; border-radius: var(--radius-sm);">
                     <span style="color: var(--text-subtle); display: block;">Co zákazník objednal:</span>
                     <b style="font-size: 15px;">${totalRequired} ks</b>
@@ -699,16 +874,16 @@ function openOrderDetailModal(order) {
                     <span style="font-size: 16px;">⚠️</span>
                     <b style="font-size: 13px; text-transform: uppercase; color: var(--brand-red); letter-spacing: 0.05em;">PROBLÉM</b>
                 </div>
-                <p style="font-size: 13px; font-weight: 700; color: #9f1239; margin-bottom: 4px;">${order.problem.title}</p>
-                <p style="font-size: 12px; color: #881337; margin-bottom: 12px;">${order.problem.detail}</p>
+                <p class="fw-bold text-danger-c mb-1">${order.problem.title}</p>
+                <p class="text-sm text-danger-c mb-3">${order.problem.detail}</p>
                 
                 <div style="background: #ffffff; border: 1px solid #fda4af; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px;">
                     <b style="font-size: 12px; color: var(--brand-red); text-transform: uppercase; display: block; margin-bottom: 4px;">CO SYSTÉM NAVRHUJE</b>
-                    <p style="font-size: 13px; color: #0f172a; line-height: 1.4;">${order.problem.suggestion}</p>
+                    <p class="text-base">${order.problem.suggestion}</p>
                 </div>
 
-                <b style="font-size: 11px; text-transform: uppercase; color: #9f1239; display: block; margin-bottom: 6px;">CO MŮŽETE UDĚLAT:</b>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="alert-title">CO MŮŽETE UDĚLAT:</span>
+                <div class="flex flex-wrap gap-2">
                     <button class="btn-action-red btn-sm" onclick="window.appState.confirmSplitProposal('${order.orderId}')">
                         ✓ Potvrdit návrh rozdělení nákupu
                     </button>
@@ -724,7 +899,7 @@ function openOrderDetailModal(order) {
 
         <!-- 2. Items Table -->
         <div>
-            <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px;">Položky zákaznické objednávky</h4>
+            <h4 class="subsection-title">Položky zákaznické objednávky</h4>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -757,7 +932,7 @@ function openOrderDetailModal(order) {
 
         <!-- 3. Audit Trail -->
         <div>
-            <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px;">Historie rozhodnutí a audit</h4>
+            <h4 class="subsection-title">Historie rozhodnutí a audit</h4>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 ${order.auditTrail.map(a => `
                     <div style="background: var(--bg-subtle); padding: 8px 12px; border-radius: var(--radius-sm); border-left: 3px solid ${a.actor === 'USER' ? 'var(--brand-red)' : 'var(--info-text)'}; font-size: 12px;">
@@ -769,12 +944,24 @@ function openOrderDetailModal(order) {
             </div>
         </div>
 
+        <!-- 3.5 Order Notes -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <h4 class="subsection-title">Poznámky k objednávce</h4>
+            <div id="order-notes-list" style="margin-bottom: 10px; color: var(--text-muted);">
+                ${order.notes && order.notes.length > 0 ? order.notes.map(n => `<div style="padding: 6px; background: var(--bg-subtle); border-radius: 4px; margin-bottom: 4px;"><b>E-shopař:</b> ${n}</div>`).join('') : 'Žádné poznámky.'}
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="new-note-input" placeholder="Přidat poznámku k objednávce..." style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 12px;">
+                <button class="btn-action-red btn-sm" onclick="window.appState.addOrderNote('${order.orderId}')">Přidat</button>
+            </div>
+        </div>
+
         <!-- 4. Manual Overrides Center -->
         <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
             <h4 style="font-size: 13px; font-weight: 800; color: var(--brand-red); text-transform: uppercase; margin-bottom: 10px;">
                 Možnosti ručního zásahu (Ruční úpravy)
             </h4>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <div class="flex flex-wrap gap-2">
                 <button class="btn-secondary btn-sm" onclick="const s = prompt('Zadejte nového dodavatele:', 'Brandit CZ'); if(s) window.appState.overrideOrderSupplier('${order.orderId}', s);">
                     Změnit dodavatele...
                 </button>
@@ -804,11 +991,11 @@ function renderSuppliersManagement(app) {
             <div class="item-card-header">
                 <div>
                     <span class="item-tag">PARTNER č. ${s.priority} · ${s.statusLabel.toUpperCase()}</span>
-                    <h3 style="font-size: 17px; margin-top: 2px;">🏢 ${s.name}</h3>
+                    <h3 class="card-title">🏢 ${s.name}</h3>
                 </div>
                 <span class="status-pill ${s.status === 'ACTIVE' ? 'status-ready' : 'status-pending'}">${s.statusLabel}</span>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; font-size: 12px;">
+            <div class="card-meta-grid">
                 <div style="background: var(--bg-subtle); padding: 10px; border-radius: var(--radius-sm);">
                     <span style="color: var(--text-subtle); display: block; font-size: 11px;">Co od něj nakupujeme:</span>
                     <b>${s.categoryDescription}</b>
@@ -822,7 +1009,7 @@ function renderSuppliersManagement(app) {
                     <b>${s.orderMethod}</b>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; font-size: 12px;">
+            <div class="card-meta-grid">
                 <div>
                     <span style="color: var(--text-subtle);">Minimální nákup: </span><b>${s.minOrderLabel}</b>
                 </div>
@@ -834,7 +1021,7 @@ function renderSuppliersManagement(app) {
                 </div>
             </div>
             ${s.note ? `<p style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 4px;">${s.note}</p>` : ''}
-            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+            <div class="card-actions">
                 <button class="btn-secondary btn-sm" onclick="window.appState.changePriority(${idx}, ${idx - 1})">
                     ↑ Zvýšit prioritu
                 </button>
@@ -1081,6 +1268,35 @@ function setupNavigation() {
         };
     }
 
+    // Order search and filters
+    const orderSearchInput = document.getElementById('order-search-input');
+    if (orderSearchInput) {
+        orderSearchInput.addEventListener('input', () => {
+            state.orderSearchQuery = orderSearchInput.value;
+            state.render();
+        });
+    }
+
+    const orderFilterButtons = document.querySelectorAll('#order-filters-container button');
+    orderFilterButtons.forEach(btn => {
+        btn.onclick = () => {
+            orderFilterButtons.forEach(b => {
+                b.style.background = '#ffffff';
+                b.style.color = 'var(--text-main)';
+                b.style.borderColor = 'var(--border-color)';
+                b.classList.remove('active-filter');
+            });
+            btn.style.background = 'var(--brand-red)';
+            btn.style.color = 'white';
+            btn.style.borderColor = 'var(--brand-red)';
+            btn.classList.add('active-filter');
+
+            const filterVal = btn.getAttribute('data-filter');
+            state.orderFilter = filterVal;
+            state.render();
+        };
+    });
+
     // Add supplier dialog (mock)
     const btnAddSupplier = document.getElementById('btn-add-supplier-dialog');
     if (btnAddSupplier) {
@@ -1163,6 +1379,8 @@ function switchView(viewName) {
         procurement: { eyebrow: 'NÁKUP', title: 'Nákupní objednávky u dodavatelů' },
         receiving: { eyebrow: 'PŘÍJEM', title: 'Příjem zboží & Naskladnění' },
         suppliers: { eyebrow: 'DODAVATELÉ', title: 'Správa dodavatelů' },
+        products: { eyebrow: 'PRODUKTY', title: 'Produkty & Mapování na dodavatele' },
+        settings: { eyebrow: 'NASTAVENÍ', title: 'Nastavení nákupních pravidel' },
         feeds: { eyebrow: 'FEEDY', title: 'Datové feedy od dodavatelů' },
         carriers: { eyebrow: 'DOPRAVCI', title: 'Přepravní služby' },
         rules: { eyebrow: 'PRAVIDLA', title: 'Automatizační pravidla' },
@@ -1176,7 +1394,8 @@ function switchView(viewName) {
     // Trigger view-specific rendering
     if (viewName === 'products') renderProductsCatalog(state, '');
     if (viewName === 'suppliers') renderSuppliersManagement(state);
-    if (viewName === 'availability') renderAuditTrail(state);
+    if (viewName === 'availability') renderAvailabilityView(state);
+    if (viewName === 'audit') renderFullAuditView(state);
 }
 
 // ============================================================
@@ -1356,7 +1575,39 @@ function getInitialMappings() {
 
 // Initialize mappings in initial state
 state.data.mappings = getInitialMappings();
-state.data.globalAuditTrail = [];
+
+// Seed initial system audit trail so audit view is not empty on first open
+state.data.globalAuditTrail = [
+    {
+        id: 'AUDIT-INIT-004', timestamp: '12:02', targetType: 'SUPPLIER_SELECTION', targetId: 'OBJ-2026-001246',
+        originalValue: 'Helikon-Tex (4 ks) — chybí 2 ks',
+        newValue: 'Helikon-Tex 4 ks + Brandit CZ 2 ks (split nákup)',
+        reason: 'Žádný dodavatel nemá celé požadované množství. AIE použil strategii SPLIT_BALANCED.',
+        user: 'SYSTÉM',
+    },
+    {
+        id: 'AUDIT-INIT-003', timestamp: '12:01', targetType: 'ALLOCATION', targetId: 'OBJ-2026-001246',
+        originalValue: 'Žádná alokace',
+        newValue: 'Čeká na dodání 6 ks (Helikon-Tex + Brandit CZ)',
+        reason: 'Zákazník objednal 6 ks Elastického obinadla. Na vlastním skladě 0 ks.',
+        user: 'SYSTÉM',
+    },
+    {
+        id: 'AUDIT-INIT-002', timestamp: '11:14', targetType: 'GOODS_RECEIPT', targetId: 'NÁKUP-2026-08-001',
+        originalValue: 'Čeká na doručení (Fox Outdoor, 12 ks)',
+        newValue: 'Přijato 12 ks — automaticky přiřazeno k OBJ-2026-001245',
+        reason: 'Balík od Fox Outdoor dorazil. Automatická alokace k čekajícím objednávkám.',
+        user: 'SYSTÉM',
+    },
+    {
+        id: 'AUDIT-INIT-001', timestamp: '10:31', targetType: 'SUPPLIER_SELECTION', targetId: 'OBJ-2026-001245',
+        originalValue: 'Žádný dodavatel — chybí 2 ks',
+        newValue: 'Fox Outdoor (hlavní partner, 2 ks, doručení do 24h)',
+        reason: 'Fox Outdoor vybrán jako hlavní partner s nejnižší cenou a nejkratší dodací lhůtou.',
+        user: 'SYSTÉM',
+    },
+];
+
 state.data.procurementSettings = { defaultStrategy: 'SPLIT_BALANCED', allowMultiSupplierSplit: true, requireApproval: true };
 
 // Expose product catalog renderer globally for search
@@ -1364,6 +1615,173 @@ window.renderProductsCatalog = () => {
     const searchInput = document.getElementById('product-search-input');
     renderProductsCatalog(state, searchInput ? searchInput.value : '');
 };
+
+// ============================================================
+// AVAILABILITY VIEW RENDERER
+// Renders deficit analysis derived from customerOrders
+// ============================================================
+function renderAvailabilityView(app) {
+    // 1. Deficity — already rendered by renderApp into #full-exceptions-list
+    // 2. Availability breakdown per order with deficit
+    const deficitOrders = app.data.customerOrders.filter(ord => {
+        const totalReq = ord.items.reduce((s, i) => s + i.required, 0);
+        const totalStk = ord.items.reduce((s, i) => s + i.stock, 0);
+        return totalReq > totalStk;
+    });
+
+    // Also rerender full-exceptions-list in context
+    const excEl = document.getElementById('full-exceptions-list');
+    if (excEl) {
+        const excContent = app.data.exceptions.length > 0
+            ? app.data.exceptions.map(exc => `
+                <div class="item-card" style="border-left: 4px solid var(--brand-red); margin-bottom: 16px;">
+                    <div class="item-card-header">
+                        <div>
+                            <span class="item-tag" style="color: var(--brand-red)">VÝJIMKA ${exc.id}</span>
+                            <h3 class="card-title">${exc.type}</h3>
+                        </div>
+                        <span class="status-pill status-exception">Závažnost: ${exc.severity}</span>
+                    </div>
+                    <div class="mb-3">
+                        <p style="margin-bottom: 6px;"><b>Popis:</b> ${exc.detail}</p>
+                        <p style="margin-bottom: 6px; color: var(--text-muted);"><b>Proč vznikl:</b> ${exc.cause}</p>
+                        <div class="alert-box alert-danger mt-2">
+                            <span class="alert-title">Co systém navrhuje:</span>
+                            <p class="alert-body">${exc.suggestion}</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        <button class="btn-action-red btn-sm" onclick="window.appState.resolveException('${exc.id}')">✓ Použít návrh systému</button>
+                        <button class="btn-secondary btn-sm" onclick="window.appState.resolveException('${exc.id}')">Vyřešit ručně</button>
+                    </div>
+                </div>`).join('')
+            : `<div style="padding:24px; text-align:center;">
+                    <span style="font-size:32px;">✅</span>
+                    <p style="color: var(--success-text); font-weight: 700; margin-top:8px;">Žádné výjimky. Vše běží v pořádku.</p>
+                    <p style="color: var(--text-muted); font-size:12px; margin-top:4px;">
+                        Systém průběžně monitoruje stav skladu a automaticky vytváří nákupy, pokud detekuje deficit.
+                    </p>
+               </div>`;
+
+        // Add deficit orders section if any
+        const deficitSection = deficitOrders.length > 0 ? `
+            <h4 style="font-size: 13px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 10px;">
+                🔍 Detailní pohled na deficity v zákaznických objednávkách
+            </h4>
+            ${deficitOrders.map(ord => {
+                const mappingsForOrder = (app.data.mappings || []).filter(m =>
+                    ord.items.some(it => it.sku === m.eshopSku)
+                );
+                return `
+                    <div class="item-card" style="margin-bottom: 12px; border-left: 3px solid #f59e0b;">
+                        <div class="item-card-header">
+                            <div>
+                                <span class="item-tag">DEFICIT</span>
+                                <b style="font-size:14px;">${ord.orderId}</b>
+                                <span style="font-size:12px; color:var(--text-subtle); margin-left:8px;">${ord.customerName}</span>
+                            </div>
+                            <button class="btn-secondary btn-sm" onclick="window.openOrder('${ord.orderId}')">Detail objednávky →</button>
+                        </div>
+                        ${ord.items.map(it => {
+                            const shortage = Math.max(0, it.required - it.stock);
+                            const suppliers = mappingsForOrder.filter(m => m.eshopSku === it.sku && m.active);
+                            return shortage > 0 ? `
+                                <div style="background:var(--bg-subtle); border-radius:var(--radius-sm); padding:10px; margin-top:8px; font-size:12px;">
+                                    <b>${it.productName}</b>
+                                    <span class="shortage-badge-red" style="margin-left:8px;">Chybí ${shortage} ks</span>
+                                    <span class="stock-badge-green" style="margin-left:4px;">Skladem: ${it.stock} ks</span>
+                                    ${suppliers.length > 0 ? `
+                                        <div style="margin-top:6px; color:var(--text-muted);">
+                                            <b>Dostupní dodavatelé pro doplnění:</b>
+                                            ${suppliers.map(s => `<span style="margin-left:6px;">🏢 ${s.supplierName} (${s.supplierStock} ks, ${s.leadTimeDays}d, ${s.purchasePriceCzk} Kč/ks)</span>`).join(' ·')}
+                                        </div>` : '<div style="color:var(--danger-text); margin-top:4px;">⚠️ Žádný aktivní dodavatel pro tuto položku!</div>'}
+                                </div>` : '';
+                        }).join('')}
+                        ${ord.procurement.length > 0 ? `
+                            <div style="margin-top:8px; font-size:12px; color:var(--info-text);">
+                                <b>🛒 Systém objednal:</b>
+                                ${ord.procurement.map(p => `${p.supplier} (${p.quantity} ks, ETA: ${p.eta})`).join(' + ')}
+                            </div>` : ''}
+                    </div>`;
+            }).join('')}` : '';
+
+        excEl.innerHTML = excContent + deficitSection;
+    }
+
+    // Render interventions audit into #interventions-audit-list (availability decision log)
+    renderAuditTrail(app);
+}
+
+// ============================================================
+// FULL AUDIT VIEW RENDERER (renders into #audit-list)
+// ============================================================
+function renderFullAuditView(app) {
+    const el = document.getElementById('audit-list');
+    if (!el) return;
+
+    // Collect all audit events: global + per-order
+    const allEvents = [];
+    (app.data.globalAuditTrail || []).forEach(r => {
+        allEvents.push({ ...r, source: 'global' });
+    });
+    app.data.customerOrders.forEach(ord => {
+        (ord.auditTrail || []).forEach(a => {
+            allEvents.push({
+                id: `ord-${ord.orderId}-${a.time}`,
+                timestamp: a.time,
+                targetType: a.actor === 'USER' ? 'MANUAL_OVERRIDE' : 'SYSTEM_ACTION',
+                targetId: ord.orderId,
+                originalValue: '',
+                newValue: a.action,
+                reason: a.actor === 'USER' ? 'Ruční zásah e-shopaře' : 'Automatické rozhodnutí systému AIE',
+                user: a.actor === 'USER' ? 'E-shopař' : 'SYSTÉM',
+                source: 'order',
+            });
+        });
+    });
+
+    if (allEvents.length === 0) {
+        el.innerHTML = '<p style="color: var(--text-subtle); padding: 16px; font-size: 13px;">Zatím žádné záznamy. Spusťte demo cyklus nebo proveďte ruční zásah.</p>';
+        return;
+    }
+
+    el.innerHTML = `
+        <table class="data-table" style="font-size:12px;">
+            <thead>
+                <tr>
+                    <th>Čas</th>
+                    <th>Typ</th>
+                    <th>Čeho se týká</th>
+                    <th>Co se stalo / Nová hodnota</th>
+                    <th>Důvod rozhodnutí</th>
+                    <th>Provedl</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${allEvents.map(r => `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--text-subtle); white-space:nowrap;">${r.timestamp}</td>
+                        <td>
+                            <span class="${r.user === 'SYSTÉM' ? 'status-pill status-info' : 'manual-override-badge'}">
+                                ${r.targetType === 'SUPPLIER_SELECTION' ? '🤖 Výběr dodavatele'
+                                    : r.targetType === 'GOODS_RECEIPT' ? '📥 Příjem zboží'
+                                    : r.targetType === 'ALLOCATION' ? '🔗 Alokace'
+                                    : r.targetType === 'MANUAL_OVERRIDE' ? '✋ Ruční zásah'
+                                    : '⚙️ Systémová akce'}
+                            </span>
+                        </td>
+                        <td><b>${r.targetId}</b></td>
+                        <td style="max-width:240px;">${r.newValue}</td>
+                        <td style="color: var(--text-muted); max-width:200px;">${r.reason}</td>
+                        <td><span style="font-size:11px;">👤 ${r.user}</span></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+
 
 // ============================================================
 // GLOBAL BINDINGS & INIT
@@ -1381,6 +1799,25 @@ document.getElementById('order-modal').onclick = (e) => {
     if (e.target === document.getElementById('order-modal')) document.getElementById('order-modal').classList.remove('active');
 };
 
+// Modal close button for other modals
+const modalCloseIds = ['feed-modal', 'carrier-modal', 'rule-modal'];
+modalCloseIds.forEach(id => {
+    const el = document.getElementById(id);
+    const btn = document.getElementById(`${id}-close-btn`);
+    if (btn) btn.onclick = () => el.classList.remove('active');
+    if (el) el.onclick = (e) => { if (e.target === el) el.classList.remove('active'); };
+});
+
+// Wire dynamic dialog buttons
+const btnAddFeed = document.getElementById('btn-add-feed-dialog');
+if (btnAddFeed) btnAddFeed.onclick = () => window.openFeedWizard();
+
+const btnAddCarrier = document.getElementById('btn-add-carrier-dialog');
+if (btnAddCarrier) btnAddCarrier.onclick = () => window.openCarrierDialog();
+
+const btnAddRule = document.getElementById('btn-add-rule-dialog');
+if (btnAddRule) btnAddRule.onclick = () => window.openRuleDialog();
+
 // Reset & guided demo
 document.getElementById('btn-reset-demo').onclick = () => state.reset();
 document.getElementById('btn-sim-cycle').onclick = () => state.runGuidedDemoCycle();
@@ -1388,4 +1825,316 @@ document.getElementById('btn-sim-cycle').onclick = () => state.runGuidedDemoCycl
 // Init
 setupNavigation();
 state.render();
+
+// ============================================================
+// WIZARDS & DIALOGS IMPLEMENTATION
+// ============================================================
+window.openFeedWizard = () => {
+    const modal = document.getElementById('feed-modal');
+    const body = document.getElementById('feed-modal-body');
+    
+    let step = 1;
+    let feedData = { name: '', url: '', type: 'XML', encoding: 'UTF-8' };
+    
+    function renderWizardStep() {
+        if (step === 1) {
+            body.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 1/4: IDENTIFIKACE FEEDU</span>
+                    <h4 style="font-size: 16px; margin-top: 4px;">Zadejte základní údaje o feedu dodavatele</h4>
+                    <p style="font-size: 12px; color: var(--text-subtle);">Zadejte název zdroje a URL adresu XML nebo CSV souboru.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Název feedu (Dodavatel):</label>
+                        <input type="text" id="feed-name-input" value="${feedData.name}" placeholder="Např. Fox Outdoor Hlavní Feed" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">URL adresa feedu:</label>
+                        <input type="text" id="feed-url-input" value="${feedData.url}" placeholder="https://api.supplier.cz/feeds/catalog.xml" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Typ souboru:</label>
+                            <select id="feed-type-select" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                                <option value="XML" ${feedData.type === 'XML' ? 'selected' : ''}>Heureka XML / Shoptet XML</option>
+                                <option value="CSV" ${feedData.type === 'CSV' ? 'selected' : ''}>Standardní CSV</option>
+                                <option value="JSON" ${feedData.type === 'JSON' ? 'selected' : ''}>REST API JSON</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Kódování:</label>
+                            <select id="feed-encoding-select" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                                <option value="UTF-8" ${feedData.encoding === 'UTF-8' ? 'selected' : ''}>UTF-8</option>
+                                <option value="WINDOWS-1250" ${feedData.encoding === 'WINDOWS-1250' ? 'selected' : ''}>Windows-1250</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <button class="btn-secondary" onclick="document.getElementById('feed-modal').classList.remove('active')">Zrušit</button>
+                    <button class="btn-action-red" id="btn-feed-next-1">Pokračovat k mapování &rarr;</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-feed-next-1').onclick = () => {
+                const name = document.getElementById('feed-name-input').value;
+                const url = document.getElementById('feed-url-input').value;
+                const type = document.getElementById('feed-type-select').value;
+                const enc = document.getElementById('feed-encoding-select').value;
+                if (!name || !url) {
+                    alert('Vyplňte prosím název i URL adresu feedu.');
+                    return;
+                }
+                feedData = { name, url, type, encoding: enc };
+                step = 2;
+                renderWizardStep();
+            };
+        } else if (step === 2) {
+            body.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 2/4: MAPOVÁNÍ DATOVÝCH POLÍ</span>
+                    <h4 style="font-size: 16px; margin-top: 4px;">Přiřaďte sloupce z feedu na AIE datové entity</h4>
+                    <p style="font-size: 12px; color: var(--text-subtle);">Zvolte, které elementy feedu odpovídají kódům produktů, cenám a stavu skladu.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: var(--bg-subtle); padding: 12px; border-radius: 6px;">
+                        <div><b>AIE Pole systému</b></div>
+                        <div><b>Element ve feedu dodavatele</b></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center;">
+                        <div><b>Kód produktu (SKU / EAN):</b></div>
+                        <select class="map-select" style="padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                            <option value="ITEM_ID">CODE / ITEM_ID</option>
+                            <option value="PRODUCTNO">PRODUCTNO</option>
+                            <option value="EAN">EAN</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center;">
+                        <div><b>Nákupní cena bez DPH:</b></div>
+                        <select class="map-select" style="padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                            <option value="PRICE_VAT">PRICE_EX_VAT</option>
+                            <option value="PRICE">PRICE</option>
+                            <option value="PURCHASE_PRICE">PURCHASE_PRICE</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center;">
+                        <div><b>Počet kusů skladem:</b></div>
+                        <select class="map-select" style="padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                            <option value="STOCK">STOCK / AMOUNT</option>
+                            <option value="AVAILABILITY">AVAILABILITY</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <button class="btn-secondary" id="btn-feed-prev-2">&larr; Zpět</button>
+                    <button class="btn-action-red" id="btn-feed-next-2">Validovat zdroj &rarr;</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-feed-prev-2').onclick = () => { step = 1; renderWizardStep(); };
+            document.getElementById('btn-feed-next-2').onclick = () => {
+                step = 3;
+                renderWizardStep();
+            };
+        } else if (step === 3) {
+            body.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--brand-red);">KROK 3/4: VALIDACE DATOVÝCH STRUKTUR</span>
+                    <h4 style="font-size: 16px; margin-top: 4px;">Simulace stažení a validace struktury feedu</h4>
+                    <p style="font-size: 12px; color: var(--text-subtle);">Systém zkušebně načetl feed a zkontroloval datové typy.</p>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bdf0c4; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <b style="color: #166534; display: block; margin-bottom: 8px;">✓ Spojení úspěšně navázáno</b>
+                    <ul style="font-size: 13px; color: #166534; padding-left: 20px; line-height: 1.5;">
+                        <li>Načteno celkem: <b>152 produktů</b></li>
+                        <li>Spárováno se sortimentem: <b>98 % položek</b></li>
+                        <li>Chybná data: <b>0 položek</b></li>
+                        <li>Průměrná nákupní cena: <b>240 CZK</b></li>
+                    </ul>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <button class="btn-secondary" id="btn-feed-prev-3">&larr; Zpět</button>
+                    <button class="btn-action-red" id="btn-feed-next-3">Aktivovat feed &rarr;</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-feed-prev-3').onclick = () => { step = 2; renderWizardStep(); };
+            document.getElementById('btn-feed-next-3').onclick = () => {
+                step = 4;
+                renderWizardStep();
+            };
+        } else if (step === 4) {
+            body.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--success-text);">KROK 4/4: DATOVÝ ZDROJ JE AKTIVNÍ</span>
+                    <h4 style="font-size: 16px; margin-top: 4px;">Feed byl úspěšně připojen a aktivován</h4>
+                    <p style="font-size: 12px; color: var(--text-subtle);">Položky z feedu se nyní pravidelně aktualizují každou hodinu.</p>
+                </div>
+                <div style="background: var(--bg-subtle); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                    <p><b>Název zdroje:</b> ${feedData.name}</p>
+                    <p><b>URL:</b> <code>${feedData.url}</code></p>
+                    <p><b>Stav synchronizace:</b> Aktivní &middot; Čeká na další běh za 59 minut</p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <button class="btn-action-red" id="btn-feed-finish">Dokončit</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-feed-finish').onclick = () => {
+                modal.classList.remove('active');
+                
+                const feedsList = document.getElementById('feeds-list');
+                if (feedsList) {
+                    feedsList.innerHTML = `
+                        <div class="item-card" style="border-left: 3px solid var(--success-text);">
+                            <div class="item-card-header">
+                                <div>
+                                    <span class="item-tag">AKTIVNÍ DATOVÝ ZDROJ (FEED)</span>
+                                    <h3 class="card-title">📡 ${feedData.name}</h3>
+                                </div>
+                                <span class="status-pill status-ready">Pravidelný import</span>
+                            </div>
+                            <div class="mb-2">
+                                <p><b>Zdrojová URL:</b> <code>${feedData.url}</code></p>
+                                <p><b>Kódování:</b> ${feedData.encoding} &middot; <b>Typ:</b> ${feedData.type} &middot; <b>Frekvence:</b> Každou hodinu</p>
+                                <p style="color: var(--success-text); margin-top: 4px; font-weight: 600;">✓ Poslední import proběhl před minutou. Načteno 152 položek.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                showToast(`Feed „${feedData.name}" byl úspěšně nastaven a spuštěn.`, 'success');
+            };
+        }
+    }
+    
+    renderWizardStep();
+    modal.classList.add('active');
+};
+
+window.openCarrierDialog = () => {
+    const modal = document.getElementById('carrier-modal');
+    const body = document.getElementById('carrier-modal-body');
+    
+    body.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Název přepravce:</label>
+                <input type="text" id="carrier-name" placeholder="Např. Zásilkovna / DPD / PPL" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Služba / Způsob dopravy:</label>
+                <input type="text" id="carrier-service" placeholder="Doručení na adresu / Výdejní místa" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">API klíč pro sledování (Tracking):</label>
+                <input type="text" placeholder="Zadejte tajný token přepravce" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <button class="btn-secondary" onclick="document.getElementById('carrier-modal').classList.remove('active')">Zrušit</button>
+            <button class="btn-action-red" id="btn-save-carrier">✓ Uložit dopravce</button>
+        </div>
+    `;
+    
+    document.getElementById('btn-save-carrier').onclick = () => {
+        const name = document.getElementById('carrier-name').value;
+        const svc = document.getElementById('carrier-service').value;
+        if (!name || !svc) {
+            alert('Vyplňte prosím název i službu.');
+            return;
+        }
+        modal.classList.remove('active');
+        
+        const list = document.getElementById('carriers-list');
+        if (list) {
+            list.innerHTML = `
+                <div class="item-card" style="border-left: 3px solid var(--success-text);">
+                    <div class="item-card-header">
+                        <div>
+                            <span class="item-tag">PŘIPOJENÝ DOPRAVCE</span>
+                            <h3 class="card-title">🚚 ${name}</h3>
+                        </div>
+                        <span class="status-pill status-ready">API Propojeno</span>
+                    </div>
+                    <div class="mb-2">
+                        <p><b>Služba:</b> ${svc}</p>
+                        <p><b>Sledování zásilek:</b> Aktivní &middot; Systém stahuje stavy doručení automaticky ze Shoptetu.</p>
+                        <p style="color: var(--text-muted); font-size: 11px;"><b>Vazba na objednávky:</b> OBJ-2026-001245 expedována přes tuto službu.</p>
+                    </div>
+                </div>
+            `;
+        }
+        showToast(`Dopravce „${name}" byl úspěšně připojen.`, 'success');
+    };
+    
+    modal.classList.add('active');
+};
+
+window.openRuleDialog = () => {
+    const modal = document.getElementById('rule-modal');
+    const body = document.getElementById('rule-modal-body');
+    
+    body.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Název pravidla:</label>
+                <input type="text" id="rule-name" placeholder="Např. Limit pro schvalování drahých nákupů" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Podmínka pravidla (Kdy se pravidlo spustí):</label>
+                <select id="rule-condition" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                    <option value="PRICE_OVER_10K">Nákupní objednávka je vyšší než 10 000 Kč</option>
+                    <option value="SUPPLIER_FAIL">Hlavní dodavatel má výpadek dodávky (lead-time zpoždění > 3 dny)</option>
+                    <option value="CUSTOMER_WAITING">Zákazník čeká déle než 5 dnů</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Akce systému (Co AIE udělá):</label>
+                <select id="rule-action" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-main); background: #fff;">
+                    <option value="PAUSE_AND_ASK">Pozastavit automatické odeslání a vyžádat schválení</option>
+                    <option value="SWITCH_SUPPLIER">Automaticky přehodit na záložního nejrychlejšího partnera</option>
+                    <option value="EMAIL_ALERT">Poslat e-mailové upozornění manažerovi nákupu</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <button class="btn-secondary" onclick="document.getElementById('rule-modal').classList.remove('active')">Zrušit</button>
+            <button class="btn-action-red" id="btn-save-rule">✓ Vytvořit pravidlo</button>
+        </div>
+    `;
+    
+    document.getElementById('btn-save-rule').onclick = () => {
+        const name = document.getElementById('rule-name').value;
+        const cond = document.getElementById('rule-condition').options[document.getElementById('rule-condition').selectedIndex].text;
+        const act = document.getElementById('rule-action').options[document.getElementById('rule-action').selectedIndex].text;
+        if (!name) {
+            alert('Vyplňte prosím název pravidla.');
+            return;
+        }
+        modal.classList.remove('active');
+        
+        const list = document.getElementById('rules-list');
+        if (list) {
+            list.innerHTML = `
+                <div class="item-card" style="border-left: 3px solid var(--brand-red);">
+                    <div class="item-card-header">
+                        <div>
+                            <span class="item-tag">AKTIVNÍ AUTOMATIZAČNÍ PRAVIDLO</span>
+                            <h3 class="card-title">⚡ ${name}</h3>
+                        </div>
+                        <span class="status-pill status-ready">Spouští se</span>
+                    </div>
+                    <div class="mb-2">
+                        <p><b>Podmínka:</b> ${cond}</p>
+                        <p><b>Akce:</b> ${act}</p>
+                        <p style="color: var(--text-muted); font-size: 11px;"><b>Vliv na rozhodnutí:</b> AIE toto pravidlo aplikuje při každém cyklu plánování.</p>
+                    </div>
+                </div>
+            `;
+        }
+        showToast(`Pravidlo „${name}" bylo uloženo a zavedeno do AIE.`, 'success');
+    };
+    modal.classList.add('active');
+};
 
