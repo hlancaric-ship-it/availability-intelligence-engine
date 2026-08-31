@@ -1738,31 +1738,74 @@ function setupNavigation() {
     if (btnAddRule && ruleModal && ruleModalBody) {
         btnAddRule.onclick = () => {
             ruleModalBody.innerHTML = `
-                <form id="rule-form" style="display:flex; flex-direction:column; gap:16px;">
+                <form id="rule-form" style="display:flex; flex-direction:column; gap:20px;">
                     <div>
-                        <label class="text-label mb-1">Název automatizačního pravidla:</label>
-                        <input type="text" id="rule-name-input" class="w-full" required style="padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);" value="Automaticky schválit nákup při marži nad 30 %" />
+                        <label class="text-label mb-1">Název pravidla:</label>
+                        <input type="text" id="rule-name-input" class="w-full" required style="padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:14px;" placeholder="Např. Automaticky schválit nákup pod 10 000 Kč" />
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
                             <label class="text-label mb-1">Spouštěcí podmínka:</label>
-                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
-                                <option>Všechny položky skladem u 1 dodavatele</option>
-                                <option>Dodací lhůta kratší než 48 hodin</option>
-                                <option>Nákupní cena pod 10 000 Kč</option>
+                            <select id="rule-condition-select" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:13px;">
+                                <optgroup label="Stav skladu">
+                                    <option>Všechny položky jsou skladem u 1 dodavatele</option>
+                                    <option>Primární dodavatel nemá dostatek zboží</option>
+                                    <option>Zásoby klesnou pod minimální úroveň</option>
+                                    <option>Zásoby klesnou pod 0 ks</option>
+                                    <option>Objednávka čeká déle než 48 hodin</option>
+                                </optgroup>
+                                <optgroup label="Finanční podmínky">
+                                    <option>Celková nákupní cena je pod 5 000 Kč</option>
+                                    <option>Celková nákupní cena je pod 10 000 Kč</option>
+                                    <option>Celková nákupní cena je pod 50 000 Kč</option>
+                                    <option>Marže objednávky je nad 20 %</option>
+                                    <option>Marže objednávky je nad 30 %</option>
+                                </optgroup>
+                                <optgroup label="Logistické podmínky">
+                                    <option>Dodací lhůta dodavatele je kratší než 24 hodin</option>
+                                    <option>Dodací lhůta dodavatele je kratší než 48 hodin</option>
+                                    <option>Zákazník zvolil expresní dopravu</option>
+                                    <option>Zákazník je VIP / opakovaný kupující</option>
+                                </optgroup>
+                                <optgroup label="Automatizace">
+                                    <option>Nová objednávka přijata z e-shopu</option>
+                                    <option>Feed od dodavatele byl aktualizován</option>
+                                    <option>Každý den v 8:00 ráno</option>
+                                    <option>Každou hodinu</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div>
-                            <label class="text-label mb-1">Požadovaná akce:</label>
-                            <select style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
-                                <option>Ihned odeslat dodavateli e-mailem</option>
-                                <option>Předat ke schválení e-shopařem</option>
+                            <label class="text-label mb-1">Akce systému:</label>
+                            <select id="rule-action-select" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:13px;">
+                                <optgroup label="Nákup">
+                                    <option>Okamžitě odeslat objednávku dodavateli e-mailem</option>
+                                    <option>Předat ke schválení e-shopařem</option>
+                                    <option>Rozdělit objednávku mezi 2 dodavatele (split)</option>
+                                    <option>Objednat u nejlevnějšího dostupného dodavatele</option>
+                                    <option>Objednat u nejrychlejšího dodavatele</option>
+                                </optgroup>
+                                <optgroup label="Upozornění">
+                                    <option>Poslat e-mail upozornění provozovateli</option>
+                                    <option>Zobrazit varování v dashboardu</option>
+                                    <option>Poslat SMS / push notifikaci</option>
+                                </optgroup>
+                                <optgroup label="Expedice">
+                                    <option>Automaticky potvrdit a odeslat zásilku</option>
+                                    <option>Přiřadit objednávku ke konkrétnímu dopravci</option>
+                                    <option>Zadat prioritní expedici (expresní)</option>
+                                </optgroup>
+                                <optgroup label="Ostatní">
+                                    <option>Zablokovat nákup a čekat na manuální schválení</option>
+                                    <option>Přesunout objednávku do fronty čekání</option>
+                                    <option>Automaticky stornovat objednávku</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
-                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-                        <button type="button" class="btn-secondary btn-sm" id="btn-cancel-rule">Zrušit</button>
-                        <button type="submit" class="btn-action-red btn-sm">⚡ Uložit a aktivovat pravidlo</button>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                        <button type="button" class="btn-secondary" id="btn-cancel-rule">Zrušit</button>
+                        <button type="submit" class="btn-action-red">⚡ Uložit a aktivovat pravidlo</button>
                     </div>
                 </form>
             `;
@@ -1772,23 +1815,26 @@ function setupNavigation() {
             document.getElementById('rule-form').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('rule-name-input').value;
+                const cond = document.getElementById('rule-condition-select').value;
+                const act = document.getElementById('rule-action-select').value;
                 ruleModal.classList.remove('active');
 
                 const rulesList = document.getElementById('rules-list');
                 if (rulesList) {
                     const newCard = document.createElement('div');
-                    newCard.className = 'item-card mb-3';
+                    newCard.className = 'item-card';
                     newCard.style.borderLeft = '4px solid var(--brand-red)';
                     newCard.innerHTML = `
                         <div class="item-card-header">
-                            <div>
-                                <span class="item-tag">AUTOMATIZAČNÍ PRAVIDLO</span>
+                            <div style="flex:1;">
+                                <span class="item-tag">AUTOMATIZAČNÍ PRAVIDLO · AKTIVNÍ</span>
                                 <h3 class="card-title">${name.toUpperCase()}</h3>
+                                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;"><b>Podmínka:</b> ${cond} · <b>Akce:</b> ${act}</p>
                             </div>
-                            <span class="status-pill status-ready">Aktivní pravidlo</span>
-                        </div>
-                        <div class="mb-2">
-                            <p><b>Aplikuje se na:</b> Všechny nově příchozí objednávky z e-shopu &middot; <b>Stav:</b> Aktivováno</p>
+                            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                                <span class="status-pill status-ready">Aktivní</span>
+                                <button class="btn-secondary btn-sm" onclick="this.closest('.item-card').remove(); showToast('Pravidlo bylo odstraněno.', 'info');">🗑 Smazat</button>
+                            </div>
                         </div>
                     `;
                     rulesList.prepend(newCard);
