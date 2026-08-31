@@ -479,6 +479,37 @@ class AppState {
         showToast(`🖨️ Vygenerováno ${readyOrders.length} štítků pro hromadný tisk.`, 'info');
     }
 
+    startInventoryMode() {
+        const sku = prompt('📷 Pípněte EAN / SKU kód produktu pro inventurní korekci:', 'TRIKO-BASIC-BLK-M');
+        if (!sku) return;
+        const newCountStr = prompt(`Zadejte nový naměřený počet kusů na skladě pro SKU '${sku}':`, '5');
+        if (!newCountStr || isNaN(parseInt(newCountStr, 10))) return;
+        const newCount = parseInt(newCountStr, 10);
+
+        // Update own stock in customer order items with matching SKU
+        let updatedCount = 0;
+        this.data.customerOrders.forEach(ord => {
+            ord.items.forEach(it => {
+                if (it.sku.toUpperCase() === sku.trim().toUpperCase()) {
+                    it.stock = newCount;
+                    updatedCount++;
+                }
+            });
+        });
+
+        this.addToGlobalAudit({
+            targetType: 'GOODS_RECEIPT',
+            targetId: sku.trim().toUpperCase(),
+            originalValue: 'Inventura před korekcí',
+            newValue: `Fyzicky naměřeno ${newCount} ks`,
+            reason: 'Fyzická inventura skladu e-shopu',
+            user: 'Skladník (Inventura)',
+        });
+
+        showToast(`📋 Inventura provedena: SKU ${sku.trim().toUpperCase()} nastaveno na ${newCount} ks.`, 'success');
+        this.render();
+    }
+
     bulkApprovePOs() {
         const pendingPOs = this.data.purchaseOrders.filter(p => p.status === 'PENDING_APPROVAL');
         if (pendingPOs.length === 0) {
@@ -1396,9 +1427,11 @@ function setupNavigation() {
     const bulkPrintBtn = document.getElementById('btn-bulk-print-labels');
     const bulkShipBtn = document.getElementById('btn-bulk-ship-orders');
     const bulkApproveBtn = document.getElementById('btn-bulk-approve-pos');
+    const invBtn = document.getElementById('btn-inventory-mode');
     if (bulkPrintBtn) bulkPrintBtn.onclick = () => window.appState.bulkPrintLabels();
     if (bulkShipBtn) bulkShipBtn.onclick = () => window.appState.bulkShipReadyOrders();
     if (bulkApproveBtn) bulkApproveBtn.onclick = () => window.appState.bulkApprovePOs();
+    if (invBtn) invBtn.onclick = () => window.appState.startInventoryMode();
 
     // Product search
     const searchInput = document.getElementById('product-search-input');
