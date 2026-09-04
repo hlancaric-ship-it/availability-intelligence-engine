@@ -10,6 +10,14 @@
   },
   "routes": [
     {
+      "pattern": "l-code-dynamics.com/nexus*",
+      "zone_name": "l-code-dynamics.com"
+    },
+    {
+      "pattern": "l-code-dynamics.com/nexustp*",
+      "zone_name": "l-code-dynamics.com"
+    },
+    {
       "pattern": "l-code-dynamics.com/availability*",
       "zone_name": "l-code-dynamics.com"
     }
