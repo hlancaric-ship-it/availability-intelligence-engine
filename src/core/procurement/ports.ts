@@ -18,6 +18,8 @@ export interface PurchaseOrderPort {
     updateStatus(tenantId: string, orderId: string, status: 'ACCEPTED' | 'SHIPPED' | 'CANCELLED'): Promise<void>;
     updateLineQuantity?(tenantId: string, lineId: string, newQuantity: number): Promise<void>;
     overrideSupplier?(tenantId: string, orderId: string, newSupplierId: string): Promise<void>;
+    /** Quantity already ordered (non-cancelled PO lines) per customerOrderLineId. Prevents duplicate purchasing across runs. */
+    getOrderedQuantityByCustomerLine?(tenantId: string, customerOrderLineIds: string[]): Promise<Map<string, number>>;
 }
 
 export interface SupplierDispatchPort {

@@ -21,7 +21,14 @@ export class ProcurementWorkflow {
         }
         try {
             this.logger.info('Starting procurement planning', { tenantId, eventId });
-            const plan = ProcurementEngine.plan(await this.platform.fetchUnfulfilledOrderLines(), await this.catalog.fetchOffers(), policy, eventId);
+            const demands = await this.platform.fetchUnfulfilledOrderLines();
+            if (!this.purchaseOrders.getOrderedQuantityByCustomerLine) {
+                this.logger.warn('PurchaseOrderPort has no getOrderedQuantityByCustomerLine – duplicate purchasing across runs is possible', { tenantId, eventId });
+            }
+            const alreadyOrdered = this.purchaseOrders.getOrderedQuantityByCustomerLine
+                ? await this.purchaseOrders.getOrderedQuantityByCustomerLine(tenantId, demands.map((d) => d.id))
+                : new Map<string, number>();
+            const plan = ProcurementEngine.plan(demands, await this.catalog.fetchOffers(), policy, eventId, alreadyOrdered);
             await this.purchaseOrders.savePlan(tenantId, plan);
             this.logger.info('Procurement plan created', { tenantId, eventId, newOrders: plan.purchaseOrders.length, unfulfilledCount: plan.unfulfilled.length });
             await this.audit.append({ tenantId, type: 'PROCUREMENT_PLAN_CREATED', entityId: eventId, payload: { purchaseOrders: plan.purchaseOrders.length, unfulfilled: plan.unfulfilled }, occurredAt: new Date().toISOString() });

@@ -72,6 +72,20 @@ export class PostgresProcurementRepository implements PurchaseOrderPort, Idempot
         }
         return [...ordersMap.values()];
     }
+    public async getOrderedQuantityByCustomerLine(tenantId: string, customerOrderLineIds: string[]): Promise<Map<string, number>> {
+        const result = new Map<string, number>();
+        if (customerOrderLineIds.length === 0) return result;
+        const rows = await this.db.transaction((tx) => tx.query<{ customer_order_line_id: string; ordered: string | number }>(
+            `SELECT l.customer_order_line_id, SUM(l.quantity) AS ordered
+             FROM procurement_purchase_order_lines l
+             JOIN procurement_purchase_orders po ON po.id = l.purchase_order_id
+             WHERE po.tenant_id = $1 AND po.status <> 'CANCELLED' AND l.customer_order_line_id = ANY($2::text[])
+             GROUP BY l.customer_order_line_id`,
+            [tenantId, customerOrderLineIds],
+        ));
+        for (const row of rows.rows ?? []) result.set(row.customer_order_line_id, Number(row.ordered));
+        return result;
+    }
     public async cancel(tenantId: string, orderId: string): Promise<void> { await this.db.transaction((tx) => tx.query("UPDATE procurement_purchase_orders SET status = 'CANCELLED' WHERE id = $1 AND tenant_id = $2 AND status NOT IN ('RECEIVED','COMPLETED','CANCELLED')", [orderId, tenantId])); }
     public async approve(tenantId: string, orderId: string): Promise<void> {
         await this.db.transaction(async (tx) => {
