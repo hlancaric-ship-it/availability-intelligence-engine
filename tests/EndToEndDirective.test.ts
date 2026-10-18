@@ -37,7 +37,7 @@ describe('End-to-End Procurement Directives (Scenarios A through J)', () => {
             variantId: 'VAR-A',
             sku: 'SKU-A',
             quantity: 5,
-            ownStockQuantity: 5, // 100% available in stock
+            ownStockQuantity: 5, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, // 100% available in stock
             createdAt: '2026-08-28T10:00:00Z',
         };
 
@@ -55,7 +55,7 @@ describe('End-to-End Procurement Directives (Scenarios A through J)', () => {
             variantId: 'VAR-B',
             sku: 'SKU-B',
             quantity: 10,
-            ownStockQuantity: 2, // shortage: 8
+            ownStockQuantity: 2, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, // shortage: 8
             createdAt: '2026-08-28T10:00:00Z',
         };
 
@@ -91,7 +91,7 @@ describe('End-to-End Procurement Directives (Scenarios A through J)', () => {
             variantId: 'VAR-C',
             sku: 'SKU-C',
             quantity: 100,
-            ownStockQuantity: 0, // deficit: 100
+            ownStockQuantity: 0, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, // deficit: 100
             createdAt: '2026-08-28T10:00:00Z',
         };
 
@@ -287,7 +287,7 @@ describe('End-to-End Procurement Directives (Scenarios A through J)', () => {
     test('Scenario J: Duplicate events prevent duplicate PO creation and double execution', async () => {
         const platform = {
             fetchUnfulfilledOrderLines: vi.fn().mockResolvedValue([
-                { id: 'l1', orderId: 'o1', productId: 'p1', variantId: 'v1', sku: 's1', quantity: 5, ownStockQuantity: 0, createdAt: '2026-01-01' },
+                { id: 'l1', orderId: 'o1', productId: 'p1', variantId: 'v1', sku: 's1', quantity: 5, ownStockQuantity: 0, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt: '2026-01-01' },
             ]),
         };
         const catalog = {

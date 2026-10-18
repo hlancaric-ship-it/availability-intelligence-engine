@@ -5,7 +5,7 @@ import { PostgresProcurementRepository } from '../src/platform/persistence/Postg
 import { PostgresDashboardReader } from '../src/platform/operations/DashboardEndpoint.js';
 
 const offer = { supplierId: 'S', supplierSku: 'X', productId: 'P', variantId: 'V', availableQuantity: 100, unitPrice: 10, currency: 'CZK', leadTimeDays: 1, active: true };
-const line = { id: 'L1', orderId: 'O1', productId: 'P', variantId: 'V', sku: 'P', quantity: 2, ownStockQuantity: 0, createdAt: 'x' };
+const line = { id: 'L1', orderId: 'O1', productId: 'P', variantId: 'V', sku: 'P', quantity: 2, ownStockQuantity: 0, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt: 'x' };
 const logger = { info() {}, warn: vi.fn(), error() {} };
 
 function makeWorkflow(overrides: { repo?: any; dispatch?: any; keys?: Set<string> } = {}) {

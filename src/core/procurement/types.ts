@@ -1,6 +1,14 @@
+export type PaymentStatus = 'PAID' | 'UNPAID' | 'COD' | 'PARTIALLY_PAID';
+export type PaymentMethod = 'CARD' | 'BANK_TRANSFER' | 'COD' | 'PAYPAL';
+
+/**
+ * Platform-neutral payment state of a customer order. Every platform adapter (Shoptet API, CSV import,
+ * other platforms) must normalize its own payment states into this shape. Never put card numbers,
+ * bank accounts or other payment credentials here.
+ */
 export interface PaymentInfo {
-    paymentStatus: 'PAID' | 'UNPAID' | 'COD' | 'PARTIALLY_PAID';
-    paymentMethod: 'CARD' | 'BANK_TRANSFER' | 'COD' | 'PAYPAL';
+    paymentStatus: PaymentStatus;
+    paymentMethod: PaymentMethod;
     paidAmount?: number;
     totalAmount?: number;
 }
@@ -99,7 +107,7 @@ export interface UnfulfilledDemand {
     variantId: string;
     sku: string;
     quantity: number;
-    reason: 'NO_SUPPLIER_OFFER' | 'INSUFFICIENT_SUPPLIER_STOCK';
+    reason: 'NO_SUPPLIER_OFFER' | 'INSUFFICIENT_SUPPLIER_STOCK' | 'AWAITING_PAYMENT';
 }
 
 export interface PurchaseOrder {
@@ -128,6 +136,8 @@ export interface GoodsReceiptLine {
 
 export interface ProcurementPolicy {
     approvalMode: 'automatic' | 'manual';
+    /** Payment gate for purchasing, own-stock reservation and shipping. Defaults to DEFAULT_PAYMENT_GATE. */
+    paymentGate?: PaymentGatePolicy;
     speedWeight?: number;
     supplierPriorityWeight?: number;
 }
@@ -140,3 +150,20 @@ export interface SupplierStatusUpdate {
     supplierId?: string;
     status: 'ACCEPTED' | 'SHIPPED' | 'CANCELLED';
 }
+
+/**
+ * Which customer orders may be purchased for, reserve own stock and be released for picking/shipping.
+ * Configurable per tenant (shop).
+ */
+export interface PaymentGatePolicy {
+    /** false = do not check payment at all (explicit tenant opt-out, e.g. no-API mode without payment data). */
+    enabled: boolean;
+    /** Payment statuses that release the order. Missing paymentInfo never releases while enabled. */
+    allowedStatuses: readonly PaymentStatus[];
+}
+
+/** Safe default: only paid orders and cash on delivery. Partially paid and unknown payment state are blocked. */
+export const DEFAULT_PAYMENT_GATE: PaymentGatePolicy = Object.freeze({
+    enabled: true,
+    allowedStatuses: Object.freeze(['PAID', 'COD'] as const),
+});

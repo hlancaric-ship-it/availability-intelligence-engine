@@ -295,7 +295,7 @@ describe('End-to-end: Cement Definition of Done', () => {
             variantId: 'cement-bag',
             sku: 'CEMENT-BAG',
             quantity: norm.canonicalQuantity,
-            ownStockQuantity: norm.canonicalOwnStock,
+            ownStockQuantity: norm.canonicalOwnStock, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const },
             createdAt: '2026-01-01T00:00:00Z',
         };
         const offers: SupplierOffer[] = [
@@ -328,7 +328,7 @@ describe('End-to-end: Cement Definition of Done', () => {
             variantId: 'cement-bag',
             sku: 'CEMENT-BAG',
             quantity: norm.canonicalQuantity,
-            ownStockQuantity: norm.canonicalOwnStock,
+            ownStockQuantity: norm.canonicalOwnStock, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const },
             createdAt: '2026-01-01T00:00:00Z',
         };
         const plan = ProcurementEngine.plan([demand], [], { approvalMode: 'automatic' }, 'evt-full');
@@ -345,7 +345,7 @@ describe('End-to-end: Cement Definition of Done', () => {
             variantId: 'cement-bag',
             sku: 'CEMENT-BAG',
             quantity: norm.canonicalQuantity,
-            ownStockQuantity: norm.canonicalOwnStock,
+            ownStockQuantity: norm.canonicalOwnStock, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const },
             createdAt: '2026-01-01T00:00:00Z',
         };
         const offers: SupplierOffer[] = [

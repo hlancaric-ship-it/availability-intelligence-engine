@@ -4,7 +4,7 @@ import type { CustomerOrderLine, SupplierOffer } from '../src/core/procurement/t
 
 const demand = (id: string, variantId: string, quantity: number, ownStockQuantity = 0): CustomerOrderLine => ({
     id, orderId: `order-${id}`, productId: 'product-1', variantId, sku: `SKU-${variantId}`,
-    quantity, ownStockQuantity, createdAt: '2026-08-28T10:00:00.000Z',
+    quantity, ownStockQuantity, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt: '2026-08-28T10:00:00.000Z',
 });
 const offer = (supplierId: string, variantId: string, availableQuantity: number, unitPrice: number, leadTimeDays: number): SupplierOffer => ({
     supplierId, supplierSku: `${supplierId}-${variantId}`, productId: 'product-1', variantId, availableQuantity,

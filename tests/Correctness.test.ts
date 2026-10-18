@@ -5,7 +5,7 @@ import { ShoptetProcurementImportAdapter } from '../src/platform/shoptet/import/
 import { PostgresProcurementRepository } from '../src/platform/persistence/PostgresProcurementRepository.js';
 
 const offer = { supplierId: 'S', supplierSku: 'X', productId: 'P', variantId: 'V', availableQuantity: 100, unitPrice: 10, currency: 'CZK', leadTimeDays: 1, active: true };
-const demand = (q: number, s = 0) => ({ id: 'L1', orderId: 'O1', productId: 'P', variantId: 'V', sku: 'P', quantity: q, ownStockQuantity: s, createdAt: '2026-01-01' });
+const demand = (q: number, s = 0) => ({ id: 'L1', orderId: 'O1', productId: 'P', variantId: 'V', sku: 'P', quantity: q, ownStockQuantity: s, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt: '2026-01-01' });
 const row = (quantity: string, stockQuantity = '0') => ({ itemId: 'i', orderCode: 'o', productGuid: 'P', variantGuid: 'V', code: 'c', quantity, stockQuantity, createdAt: 'x' });
 
 describe('Validace poptávky', () => {
@@ -40,7 +40,7 @@ describe('Migrace', () => {
 import { ProcurementWorkflow } from '../src/core/procurement/Workflow.js';
 
 const line = (id: string, q: number, stock: number, createdAt: string, variantId = 'V') =>
-    ({ id, orderId: id, productId: 'P', variantId, sku: 'P', quantity: q, ownStockQuantity: stock, createdAt });
+    ({ id, orderId: id, productId: 'P', variantId, sku: 'P', quantity: q, ownStockQuantity: stock, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt });
 const total = (plan: ReturnType<typeof ProcurementEngine.plan>) => plan.purchaseOrders.flatMap((p) => p.lines).reduce((s, l) => s + l.quantity, 0);
 const auto = { approvalMode: 'automatic' } as any;
 

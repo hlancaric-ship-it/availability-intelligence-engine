@@ -1,4 +1,5 @@
 import { SupplierSelectionEngine } from './SupplierSelectionEngine.js';
+import { isPaymentCleared } from './PaymentGate.js';
 import type { Allocation, CustomerOrderLine, GoodsReceiptLine, ProcurementPlan, ProcurementPolicy, PurchaseOrder, SupplierOffer } from './types.js';
 
 export class ProcurementEngine {
@@ -10,6 +11,10 @@ export class ProcurementEngine {
      * of that variant). It is shared and consumed in processing order (priority, then oldest first), so the
      * same units are never promised to two customer orders. If lines disagree, the lowest value is used
      * (conservative: may buy more, never less).
+     *
+     * Payment gate (policy.paymentGate, default PAID or COD): orders not cleared by payment neither reserve own
+     * stock nor get purchased. They are reported in `unfulfilled` with reason AWAITING_PAYMENT and are picked up
+     * by a later run once paid. Missing payment information counts as not paid.
      */
     public static plan(demands: CustomerOrderLine[], offers: SupplierOffer[], policy: ProcurementPolicy, eventId: string, openProcurementByLine: ReadonlyMap<string, number> = new Map()): ProcurementPlan {
         for (const demand of demands) {
@@ -28,6 +33,14 @@ export class ProcurementEngine {
 
         for (const demand of [...demands].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))) {
             const key = variantKey(demand);
+            if (!isPaymentCleared(demand.paymentInfo, policy.paymentGate)) {
+                const alreadyOrderedUnpaid = Math.max(0, openProcurementByLine.get(demand.id) ?? 0);
+                const waiting = Math.max(0, demand.quantity - alreadyOrderedUnpaid);
+                if (waiting > 0) {
+                    unfulfilled.push({ customerOrderLineId: demand.id, productId: demand.productId, variantId: demand.variantId, sku: demand.sku, quantity: waiting, reason: 'AWAITING_PAYMENT' });
+                }
+                continue;
+            }
             const stockLeft = remainingOwnStock.get(key) ?? 0;
             const fromOwnStock = Math.min(stockLeft, demand.quantity);
             remainingOwnStock.set(key, stockLeft - fromOwnStock);

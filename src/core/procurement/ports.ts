@@ -30,6 +30,12 @@ export interface SupplierDispatchPort {
 }
 
 export interface FulfillmentReadinessPort {
+    /**
+     * Records received/allocated units. Implementations MUST NOT release an order for picking, packing or
+     * shipping unless isPaymentCleared(<fresh payment info from the platform>, policy.paymentGate) is true
+     * at release time (see core/procurement/PaymentGate.ts). Payment may change between purchase and receipt.
+     * Rows must be stored with tenant_id.
+     */
     markReadyToShip(tenantId: string, allocations: any[]): Promise<void>;
     reallocate?(tenantId: string, customerOrderLineId: string, newQuantity: number): Promise<void>;
 }

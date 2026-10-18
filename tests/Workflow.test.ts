@@ -17,7 +17,7 @@ class InMemoryIdempotency implements IdempotencyPort {
 
 describe('ProcurementWorkflow Resilience', () => {
     test('scenario 1: retry after crash during dispatch never duplicates dispatch', async () => {
-        const platform = { fetchUnfulfilledOrderLines: vi.fn().mockResolvedValue([{ id: 'req1', orderId: 'o1', productId: 'p', variantId: 'v', sku: 's', quantity: 5, ownStockQuantity: 0, createdAt: '2026-01-01' }]) };
+        const platform = { fetchUnfulfilledOrderLines: vi.fn().mockResolvedValue([{ id: 'req1', orderId: 'o1', productId: 'p', variantId: 'v', sku: 's', quantity: 5, ownStockQuantity: 0, paymentInfo: { paymentStatus: 'PAID' as const, paymentMethod: 'CARD' as const }, createdAt: '2026-01-01' }]) };
         const catalog = { fetchOffers: vi.fn().mockResolvedValue([{ supplierId: 'sup1', supplierSku: 'sku', productId: 'p', variantId: 'v', availableQuantity: 10, unitPrice: 100, currency: 'CZK', leadTimeDays: 1, active: true }]) };
         const purchaseOrders = { savePlan: vi.fn(), markAsSent: vi.fn(), recordReceipt: vi.fn(), cancel: vi.fn(), approve: vi.fn(), updateStatus: vi.fn(), getOrdersByIds: vi.fn() };
         
