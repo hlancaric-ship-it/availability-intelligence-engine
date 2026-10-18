@@ -1,5 +1,5 @@
 /**
- * L-Code Nexus — Centrální UI konfigurace
+ * L-Code Chytrý nákupčí — Centrální UI konfigurace
  * Všechny texty, labely, stavy a vizuální tokeny na jednom místě.
  * Úprava hodnot zde se okamžitě projeví v celém rozhraní.
  */
@@ -49,10 +49,10 @@ export const UI_THEME = {
 };
 
 export const UI_BRAND = {
-    badge: 'NEXUS',
-    title: 'L-Code Nexus',
+    badge: 'CHYTRÝ NÁKUPČÍ',
+    title: 'L-Code Chytrý nákupčí',
     subtitle: 'Autonomní nákup & sklad',
-    pageTitle: 'L-Code Nexus – Autonomní nákup & sklad',
+    pageTitle: 'L-Code Chytrý nákupčí – Autonomní nákup & sklad',
 };
 
 export const UI_TENANT = {

@@ -1,5 +1,5 @@
 /**
- * L-Code Nexus — Dynamické vykreslení UI shellu z ui-config.js
+ * L-Code Chytrý nákupčí — Dynamické vykreslení UI shellu z ui-config.js
  */
 import {
     UI_BRAND,

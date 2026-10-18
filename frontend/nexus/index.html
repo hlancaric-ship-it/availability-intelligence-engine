@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L-Code Nexus — Autonomní nákup &amp; sklad pro Shoptet</title>
-    <meta name="description" content="L-Code Nexus hlídá sklad, sestavuje nákupy u dodavatelů a páruje zboží se zákaznickými objednávkami. Funguje s Shoptet API i bez API — import/export CSV a XLSX.">
+    <title>L-Code Chytrý nákupčí — Autonomní nákup &amp; sklad pro Shoptet</title>
+    <meta name="description" content="L-Code Chytrý nákupčí hlídá sklad, sestavuje nákupy u dodavatelů a páruje zboží se zákaznickými objednávkami. Funguje s Shoptet API i bez API — import/export CSV a XLSX.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://l-code-dynamics.com/nexus/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://l-code-dynamics.com/nexus/">
-    <meta property="og:title" content="L-Code Nexus — Autonomní nákup &amp; sklad pro Shoptet">
+    <meta property="og:title" content="L-Code Chytrý nákupčí — Autonomní nákup &amp; sklad pro Shoptet">
     <meta property="og:description" content="Autonomní nákup a sklad pro Shoptet. S REST API i bez API — stejná logika, dvě rychlosti synchronizace. Vyzkoušejte sandbox.">
     <meta property="og:locale" content="cs_CZ">
     <meta property="og:site_name" content="L-Code Dynamics">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="L-Code Nexus — Autonomní nákup &amp; sklad pro Shoptet">
+    <meta name="twitter:title" content="L-Code Chytrý nákupčí — Autonomní nákup &amp; sklad pro Shoptet">
     <meta name="twitter:description" content="Automatické nákupy u dodavatelů, kontrola dostupnosti a expedice objednávek ze Shoptetu.">
     <link href="/nexus/assets/fonts/plus-jakarta-sans.css" rel="stylesheet">
     <link rel="stylesheet" href="./landing.css">
@@ -24,7 +24,7 @@
         "@graph": [
             {
                 "@type": "SoftwareApplication",
-                "name": "L-Code Nexus",
+                "name": "L-Code Chytrý nákupčí",
                 "applicationCategory": "BusinessApplication",
                 "operatingSystem": "Web, Shoptet",
                 "url": "https://l-code-dynamics.com/nexus/",
@@ -36,10 +36,10 @@
                 "mainEntity": [
                     {
                         "@type": "Question",
-                        "name": "Nahrazuje Nexus můj skladový systém?",
+                        "name": "Nahrazuje Chytrý nákupčí můj skladový systém?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Ne. Nexus je operační vrstva nad Shoptetem a vaším skladem. Rozhoduje, co objednat u dodavatele, komu to patří a kdy můžete expedovat."
+                            "text": "Ne. Chytrý nákupčí je operační vrstva nad Shoptetem a vaším skladem. Rozhoduje, co objednat u dodavatele, komu to patří a kdy můžete expedovat."
                         }
                     },
                     {
@@ -47,7 +47,7 @@
                         "name": "Musím mít skladové zásoby u sebe?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Nexus funguje i v modelu dropship / nákup na objednávku. Klíčové je mapování variant na dodavatele a pravidla priority."
+                            "text": "Chytrý nákupčí funguje i v modelu dropship / nákup na objednávku. Klíčové je mapování variant na dodavatele a pravidla priority."
                         }
                     },
                     {
@@ -55,7 +55,7 @@
                         "name": "Musím mít Shoptet API tarif?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Ne. Nexus funguje ve dvou režimech: s Shoptet REST API (plná automatizace) i bez API přes import/export CSV a XLSX ze Shoptet adminu. Stejná nákupní logika, jiná rychlost synchronizace."
+                            "text": "Ne. Chytrý nákupčí funguje ve dvou režimech: s Shoptet REST API (plná automatizace) i bez API přes import/export CSV a XLSX ze Shoptet adminu. Stejná nákupní logika, jiná rychlost synchronizace."
                         }
                     }
                 ]
@@ -69,11 +69,11 @@
 <nav class="site-nav" id="mainNav">
     <div class="container nav-inner">
         <a href="https://l-code-dynamics.com" class="brand">
-            <span class="brand-badge">NEXUS</span>
+            <span class="brand-badge">CHYTRÝ NÁKUPČÍ</span>
             L-Code Dynamics
         </a>
         <div class="nav-links">
-            <a href="#proc">Proč Nexus</a>
+            <a href="#proc">Proč Chytrý nákupčí</a>
             <a href="#architektura">Architektura</a>
             <a href="#rezimy">S API i bez API</a>
             <a href="#pribeh">Příběh objednávky</a>
@@ -86,7 +86,7 @@
     </div>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
-    <a href="#proc">Proč Nexus</a>
+    <a href="#proc">Proč Chytrý nákupčí</a>
     <a href="#architektura">Architektura</a>
     <a href="#rezimy">S API i bez API</a>
     <a href="#pribeh">Příběh objednávky</a>
@@ -103,7 +103,7 @@
             <span class="eyebrow">Autonomní nákup &amp; sklad</span>
             <h1>Objednávka je zaplacená.<br><em>Zboží u vás není.</em><br>A vy to zjistíte až při balení?</h1>
             <p class="hero-lead">
-                L-Code Nexus hlídá každou objednávku ze Shoptetu, zjistí deficit skladem,
+                L-Code Chytrý nákupčí hlídá každou objednávku ze Shoptetu, zjistí deficit skladem,
                 sestaví nákup u dodavatele a po příjmu zboží ho automaticky přiřadí ke správnému zákazníkovi.
                 Vy schvalujete — systém dělá rutinu.
             </p>
@@ -165,7 +165,7 @@
                 <p class="section-lead" style="margin-bottom:0">
                     Shoptet vám ukáže zaplacenou objednávku a stav skladu — každý zvlášť, správně.
                     Co sám neřeší: co objednat u dodavatele, komu doručené zboží patří a kdy můžete balit.
-                    Přesně tuhle nadstavbu Nexus přidává.
+                    Přesně tuhle nadstavbu přidává Chytrý nákupčí.
                 </p>
             </div>
             <div class="card-grid cols-2">
@@ -216,8 +216,8 @@
     <div class="container reveal">
         <div class="flagship">
             <span class="eyebrow">Jádro hodnoty</span>
-            <h2>NEXUS NAVRHUJE NÁKUP.<br><em>VY SCHVALUJETE EXPEDICI.</em></h2>
-            <p class="flagship-lead">Celý tok — deficit, výběr dodavatele, nákupní objednávka, příjem, párování — proběhne v Nexus vrstvě. Shoptet admin zůstává přehledný, e-shop rychlý.</p>
+            <h2>CHYTRÝ NÁKUPČÍ NAVRHUJE NÁKUP.<br><em>VY SCHVALUJETE EXPEDICI.</em></h2>
+            <p class="flagship-lead">Celý tok — deficit, výběr dodavatele, nákupní objednávka, příjem, párování — proběhne ve vrstvě Chytrého nákupčího. Shoptet admin zůstává přehledný, e-shop rychlý.</p>
             <p style="color:var(--text-muted);margin:0 0 1rem;max-width:40rem">
                 Po schválení nákupu systém komunikuje s dodavateli. Jakmile zboží dorazí, automaticky ho přiřadí ke správným objednávkám.
                 S Shoptet API se stavy aktualizují samy; bez API přes import/export souborů — stejná logika, jiná frekvence synchronizace.
@@ -266,7 +266,7 @@
                 <div class="pl-inner">
                     <div class="station-plate"><span class="station-num">04</span><span class="station-label">MULTI-DODAVATEL</span></div>
                     <h3>Nikdo nemá celé množství? <em>Systém rozdělí nákup.</em></h3>
-                    <p>6 ks objednáno, primární partner má 4, záložní 2. Nexus navrhne rozdělení, vy schválíte — oba nákupy odejdou automaticky.</p>
+                    <p>6 ks objednáno, primární partner má 4, záložní 2. Chytrý nákupčí navrhne rozdělení, vy schválíte — oba nákupy odejdou automaticky.</p>
                 </div>
             </div>
             <div class="pl-panel">
@@ -302,7 +302,7 @@
         <div class="accent-bar"></div>
         <span class="eyebrow">Architektura</span>
         <h2 class="section-title">Samostatná vrstva pro nákup &amp; sklad</h2>
-        <p class="section-lead">Nexus izoluje složitou logiku nákupů od prostředí e-shopu — stejný princip jako u Pricing Engine u cen.</p>
+        <p class="section-lead">Chytrý nákupčí izoluje složitou logiku nákupů od prostředí e-shopu — stejný princip jako u Pricing Engine u cen.</p>
         <div class="arch-flow">
             <div class="arch-node">
                 <div class="tag">Vstup</div>
@@ -312,7 +312,7 @@
             <div class="arch-arrow">→</div>
             <div class="arch-node engine">
                 <div class="tag">Engine</div>
-                <h3>L-Code Nexus</h3>
+                <h3>L-Code Chytrý nákupčí</h3>
                 <p>Deficit · výběr dodavatele · PO · párování · audit</p>
             </div>
             <div class="arch-arrow">→</div>
@@ -323,7 +323,7 @@
             </div>
         </div>
         <div class="card-grid cols-4">
-            <article class="card"><h3>Bezpečnost</h3><p>Shoptet slouží k objednávkám a stavům — nákupní rozhodnutí probíhají v Nexus vrstvě.</p></article>
+            <article class="card"><h3>Bezpečnost</h3><p>Shoptet slouží k objednávkám a stavům — nákupní rozhodnutí probíhají ve vrstvě Chytrého nákupčího.</p></article>
             <article class="card"><h3>Centralizace</h3><p>Všechna pravidla dodavatelů, priorit a mapování na jednom místě.</p></article>
             <article class="card"><h3>Feedy</h3><p>Import dostupnosti od dodavatelů (XML/CSV) pro aktuální rozhodování.</p></article>
             <article class="card"><h3>Výkon</h3><p>Operační logika mimo zátěž hlavního prodejního kanálu.</p></article>
@@ -337,7 +337,7 @@
         <span class="eyebrow">Nasazení</span>
         <h2 class="section-title">Dva režimy — pro každý Shoptet tarif</h2>
         <p class="section-lead">
-            Nexus nevyžaduje API. Běží ve dvou plně funkčních variantách — stejná nákupní logika,
+            Chytrý nákupčí nevyžaduje API. Běží ve dvou plně funkčních variantách — stejná nákupní logika,
             rozdíl je v tom, jak rychle se data synchronizují se Shoptetem.
         </p>
         <div class="deploy-grid">
@@ -345,7 +345,7 @@
                 <div class="deploy-tag">Varianta A · Shoptet REST API</div>
                 <h3>Plná automatizace</h3>
                 <p>
-                    Pro tarify s API přístupem (Premium). Nexus čte objednávky a skladové stavy přes REST API,
+                    Pro tarify s API přístupem (Premium). Chytrý nákupčí čte objednávky a skladové stavy přes REST API,
                     navrhuje nákupy u dodavatelů a zapisuje stavy zpět do Shoptetu — bez ručního exportu.
                     Ideální, když chcete co nejkratší prodlevu mezi zaplacením a expedici.
                 </p>
@@ -360,7 +360,7 @@
                 <h3>Import / export ze Shoptet adminu</h3>
                 <p>
                     Pro tarify bez API přístupu. Stejný procurement engine — objednávky načtete exportem
-                    (CSV/XLSX) ze Shoptetu, Nexus sestaví nákupy a vygeneruje soubory k importu zpět.
+                    (CSV/XLSX) ze Shoptetu, Chytrý nákupčí sestaví nákupy a vygeneruje soubory k importu zpět.
                     Dodavatelské feedy a příjmy zboží běží přes plánované CSV cykly.
                 </p>
                 <ul class="deploy-list">
@@ -412,7 +412,7 @@
         <div class="accent-bar"></div>
         <span class="eyebrow">Tok objednávky</span>
         <h2 class="section-title">Od zaplacení po zabalení — bez mezer</h2>
-        <p class="section-lead">Nexus neřeší jen jeden krok. Sleduje celý řetězec a u každého kroku ví, co má e-shopař udělat.</p>
+        <p class="section-lead">Chytrý nákupčí neřeší jen jeden krok. Sleduje celý řetězec a u každého kroku ví, co má e-shopař udělat.</p>
         <div class="flow-track">
             <article class="flow-step">
                 <div class="flow-step-num">1</div>
@@ -422,7 +422,7 @@
             <article class="flow-step">
                 <div class="flow-step-num">2</div>
                 <h3>Deficit &amp; výběr dodavatele</h3>
-                <p>Chybí kusy? Nexus vybere dodavatele podle mapování, priority a aktuální dostupnosti ve feedu.</p>
+                <p>Chybí kusy? Chytrý nákupčí vybere dodavatele podle mapování, priority a aktuální dostupnosti ve feedu.</p>
             </article>
             <article class="flow-step">
                 <div class="flow-step-num">3</div>
@@ -432,7 +432,7 @@
             <article class="flow-step">
                 <div class="flow-step-num">4</div>
                 <h3>Příjem &amp; párování</h3>
-                <p>Zboží dorazí na sklad. Nexus ho automaticky přiřadí ke konkrétním zákaznickým objednávkám.</p>
+                <p>Zboží dorazí na sklad. Chytrý nákupčí ho automaticky přiřadí ke konkrétním zákaznickým objednávkám.</p>
             </article>
             <article class="flow-step">
                 <div class="flow-step-num">5</div>
@@ -521,7 +521,7 @@
             <article class="step-card">
                 <div class="n">KROK 4</div>
                 <h3>Nastavte priority</h3>
-                <p>Hlavní a záložní partner. Když primární nemá skladem, Nexus přepne na zálohu.</p>
+                <p>Hlavní a záložní partner. Když primární nemá skladem, Chytrý nákupčí přepne na zálohu.</p>
             </article>
             <article class="step-card ready">
                 <div class="n">KROK 5</div>
@@ -539,7 +539,7 @@
             <span class="eyebrow">Výjimky &amp; kontrola</span>
             <h2 class="section-title">Automatika, která ví, kdy má mlčet</h2>
             <p class="section-lead">
-                Nexus není černá skříňka. Když dodavatel nemá celé množství, feed je zastaralý
+                Chytrý nákupčí není černá skříňka. Když dodavatel nemá celé množství, feed je zastaralý
                 nebo vznikne nesrovnalost v příjmu — systém vás zastaví a ukáže přesně proč.
             </p>
             <p style="font-size:0.9375rem;color:var(--text-muted);margin:0">
@@ -563,14 +563,14 @@
     <div class="container reveal">
         <div class="accent-bar"></div>
         <span class="eyebrow">Upřímně</span>
-        <h2 class="section-title">Co Nexus zatím nedělá</h2>
+        <h2 class="section-title">Co Chytrý nákupčí zatím nedělá</h2>
         <p class="section-lead">Raději řekneme narovinu, než abyste čekali něco, co systém neslibuje.</p>
         <div class="limit-grid">
-            <div class="limit-item"><strong>Nenahrazuje WMS.</strong> Nexus řídí nákup a párování se zákazníky, ne kompletní skladovou logistiku s regály a pickingem.</div>
+            <div class="limit-item"><strong>Nenahrazuje WMS.</strong> Chytrý nákupčí řídí nákup a párování se zákazníky, ne kompletní skladovou logistiku s regály a pickingem.</div>
             <div class="limit-item"><strong>Neobjednává bez schválení.</strong> Výchozí režim je „navrhni a čekej na potvrzení“. Plná autonomie je na roadmapě.</div>
             <div class="limit-item"><strong>Potřebuje mapování.</strong> Bez propojení variant s dodavatelskými kódy systém neví, co kde objednat.</div>
             <div class="limit-item"><strong>Bez API je to plánovaný sync.</strong> Varianta B pracuje s importem/exportem souborů — ne v milisekundách jako REST API, ale se stejnou nákupní logikou.</div>
-            <div class="limit-item"><strong>Závisí na kvalitě feedů.</strong> Pokud dodavatel neaktualizuje dostupnost, Nexus pracuje s tím, co má — a upozorní na riziko.</div>
+            <div class="limit-item"><strong>Závisí na kvalitě feedů.</strong> Pokud dodavatel neaktualizuje dostupnost, Chytrý nákupčí pracuje s tím, co má — a upozorní na riziko.</div>
         </div>
     </div>
 </section>
@@ -596,10 +596,10 @@
         <div class="faq-list">
             <div class="faq-item">
                 <button class="faq-q" type="button">
-                    Nahrazuje Nexus můj skladový systém?
+                    Nahrazuje Chytrý nákupčí můj skladový systém?
                     <span class="chev">▼</span>
                 </button>
-                <div class="faq-a"><p>Ne. Nexus je operační vrstva nad Shoptetem a vaším skladem. Rozhoduje, co objednat u dodavatele, komu to patří a kdy můžete expedovat.</p></div>
+                <div class="faq-a"><p>Ne. Chytrý nákupčí je operační vrstva nad Shoptetem a vaším skladem. Rozhoduje, co objednat u dodavatele, komu to patří a kdy můžete expedovat.</p></div>
             </div>
             <div class="faq-item">
                 <button class="faq-q" type="button">
@@ -613,14 +613,14 @@
                     Co když dodavatel nemá celé množství?
                     <span class="chev">▼</span>
                 </button>
-                <div class="faq-a"><p>Nexus navrhne rozdělení nákupu mezi hlavního a záložního dodavatele. Vy výjimku schválíte nebo upravíte — systém to zapíše do auditu.</p></div>
+                <div class="faq-a"><p>Chytrý nákupčí navrhne rozdělení nákupu mezi hlavního a záložního dodavatele. Vy výjimku schválíte nebo upravíte — systém to zapíše do auditu.</p></div>
             </div>
             <div class="faq-item">
                 <button class="faq-q" type="button">
                     Musím mít Shoptet API tarif?
                     <span class="chev">▼</span>
                 </button>
-                <div class="faq-a"><p>Ne. Nexus má dvě varianty: <strong>s REST API</strong> (plná automatizace, reálný čas) a <strong>bez API</strong> přes import/export CSV/XLSX ze Shoptet adminu. Procurement engine je stejný — liší se jen frekvence synchronizace dat se Shoptetem. Dodavatele bez API řešíme stejně přes CSV feedy a exporty nákupních objednávek.</p></div>
+                <div class="faq-a"><p>Ne. Chytrý nákupčí má dvě varianty: <strong>s REST API</strong> (plná automatizace, reálný čas) a <strong>bez API</strong> přes import/export CSV/XLSX ze Shoptet adminu. Procurement engine je stejný — liší se jen frekvence synchronizace dat se Shoptetem. Dodavatele bez API řešíme stejně přes CSV feedy a exporty nákupních objednávek.</p></div>
             </div>
             <div class="faq-item">
                 <button class="faq-q" type="button">
@@ -640,7 +640,7 @@
         <h2 class="section-title">GDPR</h2>
         <div class="gdpr-box">
             <p style="margin-top:0">
-                L-Code Nexus zpracovává údaje v souladu s nařízením GDPR. Podrobnosti o zpracování osobních údajů,
+                L-Code Chytrý nákupčí zpracovává údaje v souladu s nařízením GDPR. Podrobnosti o zpracování osobních údajů,
                 právech subjektů údajů a kontaktech najdete v našich dokumentech:
                 <a href="https://l-code-dynamics.com/gdpr">zásady ochrany osobních údajů</a>,
                 <a href="https://l-code-dynamics.com/vop">všeobecné obchodní podmínky</a>.
@@ -661,7 +661,7 @@
             ruční nákupy a zpoždění expedice. Nebo si to nejdřív vyzkoušejte v sandboxu.
         </p>
         <div class="hero-actions" style="justify-content:center">
-            <a href="mailto:ceo@l-code-dynamics.com?subject=L-Code%20Nexus%20—%20poptávka" class="btn-primary">Napsat nám</a>
+            <a href="mailto:ceo@l-code-dynamics.com?subject=L-Code%20Chytr%C3%BD%20n%C3%A1kup%C4%8D%C3%AD%20—%20poptávka" class="btn-primary">Napsat nám</a>
             <a href="/nexustp/" class="btn-secondary"><svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Nahlédněte do testovacího prostředí</a>
         </div>
     </div>
@@ -669,7 +669,7 @@
 
 <footer class="site-footer">
     <div class="container footer-inner">
-        <span>© 2026 <a href="https://l-code-dynamics.com">L-Code Dynamics</a> · L-Code Nexus</span>
+        <span>© 2026 <a href="https://l-code-dynamics.com">L-Code Dynamics</a> · L-Code Chytrý nákupčí</span>
         <div class="footer-links">
             <a href="https://l-code-dynamics.com/gdpr">GDPR</a>
             <a href="https://l-code-dynamics.com/vop">VOP</a>

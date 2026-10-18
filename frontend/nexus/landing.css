@@ -1,4 +1,4 @@
-/* L-Code Nexus — Product landing page (Nexus light visual) */
+/* L-Code Chytrý nákupčí — Product landing page (light visual) */
 
 :root {
     --bg-app: #F0F4FA;
@@ -130,6 +130,7 @@ img { max-width: 100%; display: block; }
     font-weight: 800;
     padding: 0.2rem 0.45rem;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 .nav-links {

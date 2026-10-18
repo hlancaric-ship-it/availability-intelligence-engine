@@ -1,5 +1,5 @@
 /* =====================================================
-   L-CODE NEXUS — PREMIUM COLOR ENTERPRISE UI
+   L-CODE CHYTRÝ NÁKUPČÍ — PREMIUM COLOR ENTERPRISE UI
    Živá paleta · Plus Jakarta Sans · Symetrický grid
    ===================================================== */
 
@@ -205,6 +205,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--radius-sm);
     letter-spacing: 0.10em;
     text-transform: uppercase;
+    white-space: nowrap;
     flex-shrink: 0;
     line-height: 1.4;
     box-shadow: 0 2px 8px rgb(225 29 72 / 0.35);
