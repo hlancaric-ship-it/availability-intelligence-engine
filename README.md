@@ -1,53 +1,65 @@
-# Availability Intelligence Engine (AIE) 2.0
-> **Chytrý nákupní a kompletační asistent pro e-shopy**
+# L-Code Chytrý nákupčí
 
-AIE je automatický systém, který za e-shopaře hlídá sklad, sám nakupuje chybějící zboží u dodavatelů a dohlíží na to, aby skladníci zabalili balíky bez chyb a včas.
+> Backendová služba pro e-shopy, která hlídá chybějící zboží, nakupuje ho u dodavatelů
+> a po naskladnění ho přiřazuje ke správným zákaznickým objednávkám.
+> Je nezávislá na platformě: Shoptet je první napojená platforma, další se připojí přes adaptéry.
 
----
+Interní (technický) název repozitáře: `availability-intelligence-engine`.
 
-## 🛒 Co AIE přináší e-shopu (přehled pro e-shopaře)
-
-### 1. Už žádné ruční počítání, co chybí a kde to objednat
-* **Jak to fungovalo starém v systému (Brani)**: Když zákazník objednal 6 kusů a vy jste měli na skladě jen 4, museli jste ručně zjišťovat, u kterého dodavatele zbytek dokoupit.
-* **Jak to dělá AIE**: Systém okamžitě sám zjistí, že chybí 2 kusy. Podívá se na nabídky vašich dodavatelů a **sám nákup rozloží** — např. 4 kusy vezme od hlavního dodavatele a 2 kusy automaticky přiobjedná od záložního partnera. Zákazník tak dostane celou objednávku v jednom balíku bez zdržení.
-
-### 2. Balení balíků bez chyb a špatně poslaného zboží
-* **Poctivé pořadí (Fronta)**: Doručené zboží se automaticky přiřadí nejstarším čekajícím zákazníkům. Nikdo nepředbíhá.
-* **Pípání skenerem na skladě**: Skladník při příjmu i zabalení pípne čárový kód (EAN/SKU). Pokud pípne špatný produkt nebo jinou barvu/velikost, systém ho ihned zvukově varuje.
-* **Bezpečnostní zámek balení**: Tiskový štítek a možnost expedovat se zpřístupní **AŽ ve chvíli**, kdy je zboží pro zákazníka 100% naskladněno a připraveno k zabalení. Skladník nemůže poslat neúplný balík.
-
-### 3. Přehledný příběh u každé objednávky (Víte přesně, co se děje)
-* U každé objednávky vidíte jasnou časovou osu: **Co zákazník objednal $\rightarrow$ Co máme na skladě $\rightarrow$ Co se objednalo u dodavatele $\rightarrow$ Kdy to dorazí**.
-* **Žádné spammování dodavatelů**: Systém si pamatuje, co už objednal. Zboží od dodavatele neobjednává dvakrát ani neposílá duplicitní e-maily.
-
-### 4. Funguje plně automaticky bez složitého nastavování
-* E-shopař nemusí nic ručně nahrávat ani stahovat.
-* Systém si sám stahuje nové objednávky z e-shopu, rozešle nákupní podklady dodavatelům a po naskladnění sám změní stavy v e-shopu a připraví štítky k tisku.
-
-### 5. Hromadné akce na jedno kliknutí
-* **Jedním klikem**: Vytisknete všechny štítky pro dnešní expedici, schválíte všechny nákupy u dodavatelů nebo označíte 50 balíků za odeslané.
+> ⚠️ **Stav: vývoj, zatím není v ostrém provozu.** Podrobný a pravdivý přehled toho, co funguje a co chybí,
+> je v [STATUS.md](STATUS.md).
 
 ---
 
-## 📋 Přehledné sekce pro denní práci v e-shopu
+## Co služba dělá
 
-1. **PŘEHLED**: Vaše denní operační centrum. Vidíte 3 sloupce: *Co čeká na nákup*, *Co vyžaduje pozornost* a *Co můžete ihned zabalit*.
-2. **OBJEDNÁVKY**: Seznam všech zákazníků, stav naskladnění jejich zboží a tlačítka pro tisk štítku a expedici.
-3. **DOSTUPNOST**: Přehled produktů, kde chybí kusy, a automaty navržená řešení.
-4. **NÁKUP**: Seznam nákupních objednávek připravených k odeslání dodavatelům.
-5. **PŘÍJEM ZBOŽÍ**: Místo, kde skladník pípne přicházející balíky a systém je sám přiřadí zákazníkům.
-6. **DODAVATELÉ**: Nastavení vašich velkoobchodních partnerů, jejich dodacích lhůt a priorit.
-7. **PRODUKTY & MAPOVÁNÍ**: Propojení vašich produktů s kódy dodavatelů.
+1. **Zjistí, co chybí.** Z nevyřízených objednávek e-shopu spočítá chybějící kusy. Vlastní sklad se
+   rozděluje mezi objednávky postupně (podle priority, pak od nejstarší), takže jeden kus se neslíbí dvakrát.
+2. **Hlídá platbu.** Nakupuje a rezervuje vlastní sklad jen pro objednávky, které jsou zaplacené nebo na
+   dobírku. Ostatní čekají na zaplacení. Pravidlo si každý e-shop může upravit.
+3. **Vybere dodavatele.** Podle mapování produktů a variant, dostupnosti ve feedu, ceny, dodací lhůty a priority.
+   Když jeden dodavatel nemá celé množství, rozdělí nákup mezi více dodavatelů.
+4. **Sestaví a odešle nákupní objednávky** (automaticky, nebo po ručním schválení). Neobjedná totéž dvakrát
+   (idempotence + odečet už objednaného množství).
+5. **Sleduje stav u dodavatele** (přijato / odesláno / zrušeno) podle čísla objednávky dodavatele.
+6. **Po naskladnění přiřadí zboží** ke konkrétním řádkům zákaznických objednávek.
+7. **Zapisuje audit** všech rozhodnutí.
 
----
+Dále umí: vyhodnocení a řazení dostupnosti produktů, prodejní jednotky (ks / balení / paleta, převody, zálohy
+na obaly).
 
-## ⚡ Ověření funkčnosti
+## Architektura
 
-```bash
-npm run typecheck
-npm test
+```
+Platforma e-shopu (Shoptet, …) ──adaptér──▶ CommercePlatformPort ─┐
+Feedy / API dodavatelů         ──adaptér──▶ SupplierCatalogPort  ─┼─▶ jádro (src/core) ─▶ PurchaseOrderPort (PostgreSQL)
+                                            SupplierDispatchPort ◀┘                     ─▶ FulfillmentReadinessPort
 ```
 
-## Co je nutné před produkcí
+- `src/core/` – obchodní logika bez závislosti na platformě, HTTP nebo databázi.
+- `src/platform/shoptet/` – adaptér Shoptetu (zatím jen čtení přes API a normalizace CSV/XML exportu).
+- `src/platform/suppliers/` – dodavatelé (obecný API klient, CSV bez API).
+- `src/platform/persistence/` – PostgreSQL; každý záznam je oddělen podle e-shopu (`tenant_id`).
+- `migrations/` – SQL migrace, spouštět v pořadí `001` → `004`.
+- `frontend/` – prezentační web a interaktivní demo s ukázkovými daty (nejde o administraci doplňku).
 
-Tento repozitář neobsahuje běžící službu ani přihlašovací údaje. `ShoptetReadOnlyClient` používá pouze read token a GET; před nasazením je nutné dodat tenant secrets a mapování reálných Shoptet payloadů. Je také nutné připojit PostgreSQL transakční adapter, spustit migraci, nakonfigurovat dodavatelské feedy/odesílání PO, worker pro scheduled no-API import, interní endpoint dashboardu, observabilitu a provozní alerty.
+**Nová platforma** = nový adaptér, který implementuje porty v `src/core/procurement/ports.ts` a převede
+objednávky (včetně stavu platby do `PaymentInfo`) na `CustomerOrderLine`. Jádro se nemění.
+
+## Ochrana dat
+
+- Data e-shopů jsou oddělená (`tenant_id` ve všech tabulkách, identifikátory i klíče idempotence).
+- Služba neukládá platební údaje (čísla karet, účty), jen stav a způsob platby.
+- Přístup do Shoptetu je pouze pro čtení (`ShoptetReadOnlyClient`, jen GET); respektuje limity API (429/503).
+- Prezentační web nepoužívá analytiku ani externí fonty a nenastavuje cookies.
+
+## Vývoj
+
+```bash
+npm ci
+npm run typecheck
+npm test
+npm run dev        # lokální server prezentačního webu a dema
+```
+
+Nasazení prezentačního webu: `npm run deploy` (Cloudflare Workers, konfigurace ve `wrangler.jsonc`).
