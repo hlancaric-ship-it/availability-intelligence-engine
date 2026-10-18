@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 // Extract the browser helpers from the shipped frontend and evaluate them in isolation.
-const src = readFileSync(new URL('../frontend/nexustp/dashboard.js', import.meta.url), 'utf8');
+const src = readFileSync(new URL('../frontend/chytry-nakupci/demo/dashboard.js', import.meta.url), 'utf8');
 const helpers = src.slice(src.indexOf('function esc('), src.indexOf('\n}\n', src.indexOf('function jsArg(')) + 3);
 const { esc, jsArg } = new Function(`${helpers}; return { esc, jsArg };`)() as { esc: (v: unknown) => string; jsArg: (v: unknown) => string };
 const decode = (s: string) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#96;/g, '`').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -21,7 +21,7 @@ describe('Frontend – ochrana proti XSS', () => {
             expect(JSON.parse(decode(attr))).toBe(payload);
         });
     test('žádný inline handler nevkládá hodnotu do uvozovek ručně', () => {
-        for (const f of ['../frontend/nexustp/dashboard.js']) {
+        for (const f of ['../frontend/chytry-nakupci/demo/dashboard.js']) {
             const code = readFileSync(new URL(f, import.meta.url), 'utf8');
             expect(code.split('\n').filter((l) => l.includes('onclick=') && /'\$\{/.test(l))).toEqual([]);
         }

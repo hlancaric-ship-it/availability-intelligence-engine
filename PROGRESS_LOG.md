@@ -12,7 +12,7 @@
 | `94dab81`, `d892e5e` | K1, K2: žádný dvojí nákup mezi běhy, sdílený vlastní sklad; validace množství, opakování po chybě |
 | `1d4f9d7` | K6, K7: stavy od dodavatele podle jeho čísla objednávky; oddělení dat e-shopů (ID, idempotence, dashboard); migrace 004 |
 | `71b99d7` | Odstraněn Google Analytics, počítadlo návštěv a Google Fonts (fonty lokálně); přísnější CSP → web bez cookies |
-| `9010000` | Přejmenování na **L-Code Chytrý nákupčí** (texty; URL `/nexus`, `/nexustp` zůstaly) |
+| `9010000` | Přejmenování na **L-Code Chytrý nákupčí** (texty; adresy přejmenovány 2026-10-18 na `/chytry-nakupci/`) |
 | `d6673b4` | Kontrola platby: nakupovat, rezervovat sklad a expedovat jen zaplacené nebo dobírku (nastavitelné pro e-shop) |
 | `9c444fe` | D1: pravdivý README a STATUS.md místo FINAL_STATUS.md; web „pro e-shopy“, ne jen Shoptet |
 | `13cb037` | Sklad a expedice: bezpečnostní zámek, balení a příjem skenerem, odeslání, hromadné akce; migrace 005 |
@@ -46,6 +46,13 @@ Nová zjištění do TODO:
 - Všechno je napojené přes **obecný adaptér platformy** – Shoptet bude první `PlatformAdapter`, další platforma = nový adaptér + `platforms.register(...)`, jádro / API / plánovač / webhooky se nemění. Dokud adaptér chybí, je vše fail-safe (neznámá platba ⇒ objednávka zůstane zamčená, plánovač e-shop přeskočí).
 - Přihlášení do API je **prozatímní** (jeden Bearer token → jeden e-shop) – nahradí ho S1.
 - Testy: `tests/Backend.test.ts`.
+
+### Název „Chytrý nákupčí“ i v adresách (2026-10-18)
+
+- Web: `/chytry-nakupci/`, demo: `/chytry-nakupci/demo/` (dřív `/nexus/`, `/nexustp/`). Opraveny i viditelné texty „na nexustp“.
+- Staré adresy `/nexus…`, `/nexustp…`, `/availability…` trvale přesměrovávají (308) na nové – odkazy se nerozbijí.
+- Test `tests/Routes.test.ts` hlídá přesměrování a to, že se slovo „Nexus“ ve webu znovu neobjeví.
+- Interní název Workeru (`availability-dashboard`) a repozitáře zákazník nevidí; přejmenovat jde později.
 
 ### Shoptet adaptér bez partnerského účtu (2026-10-18)
 
@@ -83,7 +90,7 @@ Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních b
 
 **Krok 3 – Přihlášení (S1) a skutečná administrace**
 - [ ] Přihlášení; každý uživatel vidí jen data svého e-shopu (tenant z relace, nikdy z parametru).
-- [ ] Napojit demo `/nexustp` na API místo ukázkových dat.
+- [ ] Napojit demo `/chytry-nakupci/demo/` na API místo ukázkových dat.
 - [ ] Skenování v prohlížeči (čtečka jako klávesnice) se zvukovým varováním při chybě.
 - [ ] Odstranit inline `onclick` z `dashboard.js` → pak z CSP zmizí `'unsafe-inline'`.
 

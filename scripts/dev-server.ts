@@ -174,11 +174,11 @@ const server = createServer(async (req, res) => {
     }
 
     if (url.pathname === '/') {
-        res.writeHead(302, { Location: '/nexustp/' });
+        res.writeHead(302, { Location: '/chytry-nakupci/' });
         res.end();
         return;
     }
-    // Directory URLs (e.g. /nexustp/) serve their index.html, like Cloudflare static assets.
+    // Directory URLs (e.g. /chytry-nakupci/demo/) serve their index.html, like Cloudflare static assets.
     let filePath = url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname;
     const fullPath = resolve(frontendDir, '.' + filePath);
     if (!fullPath.startsWith(resolve(frontendDir) + sep)) {

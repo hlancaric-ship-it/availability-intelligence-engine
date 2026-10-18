@@ -34,7 +34,7 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 | S1 | Skutečné přihlášení do administrace (každý e-shop vidí jen svá data). |
 | I1 | Shoptet adaptér je napsaný (instalace, tokeny, webhooky, objednávky, platby), ale **neověřený** – chybí partnerský účet. |
 | I2 | Vlastní sklad se nepromítá do expedice (objednávka krytá jen vlastním skladem se neuvolní k balení). |
-| I3 | Administrace napojená na skutečná data (dnes je `frontend/nexustp` jen demo s ukázkovými daty). |
+| I3 | Administrace napojená na skutečná data (dnes je `frontend/chytry-nakupci/demo` jen demo s ukázkovými daty). |
 | – | Převod stavu platby ze Shoptetu (API i CSV) do `PaymentInfo`. Bez něj se z bezpečnostních důvodů nic nenakoupí. |
 | – | Adaptér platformy pro `PaymentStatusPort` (čerstvý stav platby ze Shoptetu) a pro načtení objednávek do skladu (`FulfillmentService.upsertOrder`, včetně EAN). |
 | – | Zápis zpět do e-shopu (stavy objednávek, sklad) – Shoptet adaptér je zatím jen pro čtení. |
@@ -50,6 +50,6 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 
 ## Co v demu je, ale v backendu ne
 
-Demo (`/nexustp`) ukazuje skenování, tisk štítků, hromadné akce, dopravce, feedy a pravidla s ukázkovými daty.
+Demo (`/chytry-nakupci/demo/`) ukazuje skenování, tisk štítků, hromadné akce, dopravce, feedy a pravidla s ukázkovými daty.
 Backend pro skenování, zámek expedice a hromadné akce už existuje (viz výše), ale **demo na něj zatím není napojené**
 (HTTP API a přihlášení – krok 2 a 3). Štítky a dopravci backend zatím nemají.

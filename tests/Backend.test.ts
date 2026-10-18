@@ -38,7 +38,7 @@ describe('AdminApi – krok 2', () => {
         expect(() => new AdminApi({} as any)).toThrow(/authenticate/);
     });
     test('mimo /api/v1 vrací undefined (statický web)', async () => {
-        expect(await makeApi().api.handle(new Request('https://x.test/nexustp/'))).toBeUndefined();
+        expect(await makeApi().api.handle(new Request('https://x.test/chytry-nakupci/demo/'))).toBeUndefined();
     });
     test('nepřihlášený → 401 jednotný formát', async () => {
         const res = (await makeApi().api.handle(new Request(`${BASE}/dashboard`)))!;

@@ -1,23 +1,14 @@
 import { handleBackendRequest, handleScheduled } from './src/platform/cloudflare/backend.js';
 import type { BackendEnv } from './src/platform/cloudflare/backend.js';
+import { redirectTarget } from './src/platform/cloudflare/routes.js';
 
 interface Env extends BackendEnv {
   ASSETS: Fetcher;
 }
 
-const SANDBOX_PREFIX = '/nexustp';
-const LEGACY_PREFIX = '/availability';
-
-const OLD_SANDBOX_ASSETS = new Set([
-  'dashboard.js',
-  'app-shell.js',
-  'ui-config.js',
-  'styles.css',
-]);
-
 // Security headers applied to every response. No third-party scripts, fonts or analytics are loaded
 // (backend add-on; no tracking → no cookie consent needed). 'unsafe-inline' in script-src is still required by the
-// inline onclick handlers in nexustp/dashboard.js – remove it once those are migrated to addEventListener.
+// inline onclick handlers in chytry-nakupci/demo/dashboard.js – remove it once those are migrated to addEventListener.
 const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
@@ -62,23 +53,7 @@ export default {
 
 async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const { pathname } = url;
-
-    if (pathname === LEGACY_PREFIX || pathname.startsWith(`${LEGACY_PREFIX}/`)) {
-      const rest = pathname.slice(LEGACY_PREFIX.length) || '/';
-      return redirect(url, `${SANDBOX_PREFIX}${rest}`);
-    }
-
-    if (pathname === SANDBOX_PREFIX) {
-      return redirect(url, `${SANDBOX_PREFIX}/`);
-    }
-
-    if (pathname.startsWith('/nexus/')) {
-      const rest = pathname.slice('/nexus/'.length);
-      if (OLD_SANDBOX_ASSETS.has(rest)) {
-        return redirect(url, `${SANDBOX_PREFIX}/${rest}`);
-      }
-    }
-
+    const target = redirectTarget(url.pathname);
+    if (target) return redirect(url, target); // query string is preserved
     return env.ASSETS.fetch(request);
 }
