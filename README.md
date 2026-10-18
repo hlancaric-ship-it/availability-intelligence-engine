@@ -105,5 +105,14 @@ npx wrangler secret put ADMIN_TENANT_ID                                # e-shop,
 npm run deploy
 ```
 
+### Zapnutí Shoptetu (po získání partnerského účtu)
+
+1. V partnerské administraci (Propojení → API partner → Přístup k API) opsat Client ID, URL OAuth serveru (`…/token`)
+   a URL pro API token (`…/getAccessToken`) do `vars` ve `wrangler.jsonc`.
+2. `npx wrangler secret put SHOPTET_CLIENT_SECRET`
+3. V nastavení doplňku: URL pro OAuth kód = `https://l-code-dynamics.com/platforms/shoptet/install`,
+   systémové webhooky `addon:uninstall`, `addon:terminate` → `https://l-code-dynamics.com/platforms/shoptet/webhook`.
+4. `npm run deploy` a v záložce Uživatelé spustit testovací instalaci.
+
 Přihlášení do API je zatím **prozatímní** (`Authorization: Bearer <ADMIN_API_TOKEN>` → jeden e-shop).
 Změny vyžadují hlavičku `Idempotency-Key` (opakovaný požadavek se neprovede dvakrát).

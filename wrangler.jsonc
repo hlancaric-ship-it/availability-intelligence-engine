@@ -21,6 +21,18 @@
   "hyperdrive": [
     { "binding": "HYPERDRIVE", "id": "1b90f9181336471789937183583daa7b" }
   ],
+  // Shoptet add-on (values from Partner e-shop → Propojení → API partner → Přístup k API).
+  // While any of them is empty, the Shoptet adapter is NOT active. Secret: npx wrangler secret put SHOPTET_CLIENT_SECRET
+  // In the add-on settings set: "URL pro získání OAuth kódu" = SHOPTET_REDIRECT_URI and the system webhooks
+  // addon:uninstall + addon:terminate → SHOPTET_WEBHOOK_URL.
+  "vars": {
+    "SHOPTET_CLIENT_ID": "",
+    "SHOPTET_OAUTH_TOKEN_URL": "",
+    "SHOPTET_ACCESS_TOKEN_URL": "",
+    "SHOPTET_REDIRECT_URI": "https://l-code-dynamics.com/platforms/shoptet/install",
+    "SHOPTET_WEBHOOK_URL": "https://l-code-dynamics.com/platforms/shoptet/webhook",
+    "SHOPTET_OPEN_STATUS_IDS": "-1,-2"
+  },
   // Must match CRON_PLANNING / CRON_SUPPLIER_STATUS in src/platform/cloudflare/backend.ts.
   "triggers": { "crons": ["*/15 * * * *", "5 * * * *"] },
   "observability": { "enabled": true },

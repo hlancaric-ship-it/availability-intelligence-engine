@@ -47,6 +47,27 @@ Nová zjištění do TODO:
 - Přihlášení do API je **prozatímní** (jeden Bearer token → jeden e-shop) – nahradí ho S1.
 - Testy: `tests/Backend.test.ts`.
 
+### Shoptet adaptér bez partnerského účtu (2026-10-18)
+
+Napsáno podle oficiální dokumentace a mock serveru Shoptetu; **aktivuje se až vyplněním `vars` ve `wrangler.jsonc`**
+(do té doby se na produkci nic nemění). Testy: `tests/Shoptet.test.ts` (podpis webhooku ověřen oficiálním příkladem).
+
+**Ověřit na partnerském testovacím e-shopu (NEOVĚŘENO):**
+- [ ] Instalace: tvar odpovědi OAuth serveru (`access_token`, `eshopId`), stihne se do 5 s.
+- [ ] `POST /api/webhooks/renew-signature-key` a registrace webhooků (odpověď při opakované instalaci).
+- [ ] Vlastní sklad: počítáme volné kusy = `amount − claim` z `/api/stocks/{id}/supplies`; ověřit význam `claim` a filtr `productCodes`.
+- [ ] ID stavů „nevyřízená / vyřizuje se“ (výchozí `-1,-2`) a „stornována“ (`-4`) – případně nastavit `SHOPTET_OPEN_STATUS_IDS`.
+- [ ] Celý průchod: instalace → objednávka → nákup → příjem → balení → odeslání → odinstalace (smazání dat).
+
+**V partnerské administraci nastavit:** URL pro OAuth kód = `https://l-code-dynamics.com/platforms/shoptet/install`;
+systémové webhooky `addon:uninstall` a `addon:terminate` → `https://l-code-dynamics.com/platforms/shoptet/webhook`;
+oprávnění endpointů: objednávky (čtení), sklady (čtení), webhooky (zápis).
+
+**Nová zjištění do TODO:**
+- [ ] Jádro: vlastní sklad se zatím nepromítá do skladu expedice (`allocatedQuantity`) → objednávka plně krytá vlastním skladem se nikdy neuvolní k balení. Doplnit rezervaci vlastního skladu z plánu nákupu.
+- [ ] Zápis zpět do Shoptetu (stav objednávky, sklad) – adaptér je zatím jen pro čtení; mapování našich stavů na ID stavů e-shopu musí být nastavitelné.
+- [ ] `addon:suspend` / `addon:approve` (pozastavení doplňku) – dočasně vypnout plánovač pro e-shop.
+
 ### Zbývá udělat (v tomto pořadí)
 
 Rozhodnutí: služba je **backendový doplněk pro více platforem**, Shoptet je první adaptér. Partnerský účet
@@ -68,12 +89,12 @@ Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních b
 
 **Krok 4 – Obecné rozhraní platformy + adaptér Shoptetu (I1–I3, bez ověření do získání účtu)**
 - [x] Obecné rozhraní `PlatformAdapter` + `PlatformRegistry` (`src/core/platform/PlatformAdapter.ts`, registrace v `src/platform/platforms.ts`); obecné cesty `/platforms/<platforma>/install` a `/webhook`.
-- [~] Bezpečné uložení tokenů (AES-256-GCM, `EncryptedPostgresCredentialsStore`) a smazání všech dat po odinstalaci (`TenantLifecycleService`) – **hotovo obecně pro každou platformu**. **Zbývá:** Shoptet adaptér – výměna OAuth kódu za token (`lifecycle.install`).
-- [~] Zpracování webhooků obecně hotové (rychlá odpověď, zpracování na pozadí, idempotentní). **Zbývá:** Shoptet `webhooks.verifyAndParse` (ověření podpisu).
-- [ ] Shoptet: převod objednávek do `CustomerOrderLine` a `FulfillmentService.upsertOrder` (včetně EAN).
-- [ ] Shoptet: `PaymentStatusPort` – převod stavu platby do `PaymentInfo` (API i CSV). **Bez toho se nic nenakoupí ani neodešle.**
+- [x] Shoptet instalace: výměna OAuth kódu za token (do 4 s, kontrola IP 185.184.254.x), šifrované uložení, na pozadí klíč pro podpis webhooků a registrace webhooků; smazání všech dat po odinstalaci. *(Neověřeno na živém Shoptetu.)*
+- [x] Shoptet webhooky: HMAC-SHA1 nad surovým tělem (ověřeno oficiálním příkladem z dokumentace), objednávka vytvořena / změněna / zaplacena / stornována / smazána, odinstalace.
+- [x] Shoptet: objednávky → `CustomerOrderLine` a do skladu (`upsertOrder`, včetně EAN); ignoruje dopravu/platbu/slevy, nehádá smazané produkty ani necelá množství.
+- [~] Shoptet: stav platby přes API hotový (`paid` + `billingMethod`: dobírka / převod / karta; hotovost se bere jako nezaplaceno). **Zbývá:** varianta bez API (CSV).
 - [ ] Shoptet: zápis stavů objednávek a skladu zpět (dnes `ShoptetOutboundSync` jen simulace); klient zatím umí jen GET.
-- [ ] Dodržet limity Shoptet API (už v `ShoptetReadOnlyClient`), přidat i pro zápis.
+- [x] Limity Shoptet API: 30min tokeny s obnovou, max. 1 spojení na e-shop (limit 3), 429/423/503 s `Retry-After` (i datum), max. 500 objednávek na běh.
 - [ ] Podklady pro schválení v doplňkovém marketplace: popis, ikona, zásady zpracování osobních údajů, podpora.
 
 **Krok 5 – Přepravci a štítky**

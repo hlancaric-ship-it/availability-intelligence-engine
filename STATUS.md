@@ -32,12 +32,12 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 | Bod | Co chybí |
 |---|---|
 | S1 | Skutečné přihlášení do administrace (každý e-shop vidí jen svá data). |
-| I1 | Shoptet adaptér: výměna OAuth kódu za token (obecná instalace, šifrované uložení a smazání dat už jsou hotové). |
-| I2 | Shoptet adaptér: ověření podpisu webhooků (obecné zpracování webhooků už je hotové). |
+| I1 | Shoptet adaptér je napsaný (instalace, tokeny, webhooky, objednávky, platby), ale **neověřený** – chybí partnerský účet. |
+| I2 | Vlastní sklad se nepromítá do expedice (objednávka krytá jen vlastním skladem se neuvolní k balení). |
 | I3 | Administrace napojená na skutečná data (dnes je `frontend/nexustp` jen demo s ukázkovými daty). |
 | – | Převod stavu platby ze Shoptetu (API i CSV) do `PaymentInfo`. Bez něj se z bezpečnostních důvodů nic nenakoupí. |
 | – | Adaptér platformy pro `PaymentStatusPort` (čerstvý stav platby ze Shoptetu) a pro načtení objednávek do skladu (`FulfillmentService.upsertOrder`, včetně EAN). |
-| – | Zápis zpět do e-shopu (stavy objednávek, sklad). `ShoptetOutboundSync` je zatím jen simulace. |
+| – | Zápis zpět do e-shopu (stavy objednávek, sklad) – Shoptet adaptér je zatím jen pro čtení. |
 | – | Provozní nasazení: vytvořit databázi a Hyperdrive, nastavit tajné klíče, alerty nad Workers Logs. |
 
 ## 🟡 Známé nedostatky

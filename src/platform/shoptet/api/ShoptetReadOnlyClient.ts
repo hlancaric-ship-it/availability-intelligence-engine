@@ -1,4 +1,7 @@
 /**
+ * @deprecated Superseded by ../ShoptetApiClient.ts (token renewal, 423 handling, per-token serialisation).
+ * Kept only for the no-API import tooling and its tests.
+ *
  * Concrete Shoptet transport with a hard GET-only invariant. The token needs only
  * read permissions; the client has no method capable of sending a mutation.
  */

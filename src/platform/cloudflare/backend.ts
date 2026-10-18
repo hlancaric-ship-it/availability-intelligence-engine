@@ -26,6 +26,14 @@ export interface BackendEnv {
     /** PROZATÍMNÍ přihlášení (do S1): náhodný token ≥ 32 znaků → jeden e-shop. */
     ADMIN_API_TOKEN?: string;
     ADMIN_TENANT_ID?: string;
+    /** Shoptet add-on – see wrangler.jsonc "vars" and src/platform/shoptet/ShoptetConfig.ts. */
+    SHOPTET_CLIENT_ID?: string;
+    SHOPTET_CLIENT_SECRET?: string;
+    SHOPTET_OAUTH_TOKEN_URL?: string;
+    SHOPTET_ACCESS_TOKEN_URL?: string;
+    SHOPTET_REDIRECT_URI?: string;
+    SHOPTET_WEBHOOK_URL?: string;
+    SHOPTET_OPEN_STATUS_IDS?: string;
 }
 
 export interface WaitUntil { waitUntil(promise: Promise<unknown>): void }
@@ -110,7 +118,7 @@ async function handleAdminApi(request: Request, env: BackendEnv, ctx: WaitUntil)
     if (!(await authenticate(request.clone()))) return jsonError(401, 'UNAUTHORIZED', 'Nepřihlášeno');
     try {
         return await withDatabase(env, ctx, async (db) => {
-            const s = buildServices(db, env, createPlatformRegistry(env as Record<string, unknown>));
+            const s = buildServices(db, env, createPlatformRegistry(env as Record<string, unknown>, workerLogger));
             const api = new AdminApi({ authenticate, dashboard: s.dashboard, audit: s.dashboard, fulfillment: s.fulfillment, fulfillmentRepository: s.fulfillmentRepository, workflow: s.workflow, logger: workerLogger });
             return (await api.handle(request)) ?? jsonError(404, 'NOT_FOUND', 'Neznámý endpoint');
         });
@@ -121,7 +129,7 @@ async function handleAdminApi(request: Request, env: BackendEnv, ctx: WaitUntil)
 }
 
 async function handlePlatformRoute(platform: string, action: 'install' | 'webhook', request: Request, env: BackendEnv, ctx: WaitUntil): Promise<Response> {
-    const platforms = createPlatformRegistry(env as Record<string, unknown>);
+    const platforms = createPlatformRegistry(env as Record<string, unknown>, workerLogger);
     const adapter = platforms.get(platform);
     if (!adapter) return jsonError(404, 'UNKNOWN_PLATFORM', 'Platforma není podporována');
 
@@ -130,7 +138,18 @@ async function handlePlatformRoute(platform: string, action: 'install' | 'webhoo
             if (!adapter.lifecycle) return jsonError(404, 'NOT_SUPPORTED', 'Platforma nepodporuje instalaci');
             // Adapter exchanges the install code for credentials BEFORE we answer 200 (Shoptet requires this order).
             const result = await adapter.lifecycle.install(request);
-            await withDatabase(env, ctx, (db) => buildServices(db, env, platforms).lifecycle.install(platform, result));
+            const tenantId = await withDatabase(env, ctx, (db) => buildServices(db, env, platforms).lifecycle.install(platform, result));
+            // Slow follow-up (webhook registration, signing key) runs after we have already answered 200.
+            if (adapter.lifecycle.afterInstall) {
+                ctx.waitUntil(withDatabase(env, ctx, async (db) => {
+                    const s = buildServices(db, env, platforms);
+                    const extra = await adapter.lifecycle!.afterInstall!({ tenantId, integrationMode: 'api', credentials: s.credentials });
+                    if (extra && Object.keys(extra).length > 0) {
+                        const current = (await s.credentials.get(tenantId)) ?? {};
+                        await s.credentials.put(tenantId, { ...current, ...extra });
+                    }
+                }).catch((error) => workerLogger.error('afterInstall failed', { platform, tenantId, error: error instanceof Error ? error.message : 'Unknown error' })));
+            }
             return new Response(JSON.stringify({ ok: true }), { status: 200, headers: JSON_HEADERS });
         }
 
@@ -162,11 +181,7 @@ export async function processPlatformEvents(events: PlatformEvent[], env: Backen
         const replan = new Map<string, string>();
         for (const event of events) {
             if (event.type === 'APP_UNINSTALLED') { await s.lifecycle.uninstall(event.tenantId); replan.delete(event.tenantId); continue; }
-            if (event.orderId) {
-                const existing = await s.fulfillmentRepository.get(event.tenantId, event.orderId);
-                if (existing && event.type === 'ORDER_CANCELLED') await s.fulfillment.cancel(event.tenantId, event.orderId);
-                else if (existing && (event.type === 'ORDER_PAID' || event.type === 'ORDER_UPDATED')) await s.fulfillment.refreshPayment(event.tenantId, event.orderId);
-            }
+            if (event.orderId) await syncOrder(s, platforms, event);
             replan.set(event.tenantId, event.eventId);
         }
         for (const [tenantId, eventId] of replan) {
@@ -178,10 +193,35 @@ export async function processPlatformEvents(events: PlatformEvent[], env: Backen
     });
 }
 
+/**
+ * Keeps the warehouse copy of one order in sync with the platform (platform-neutral).
+ * Uses the adapter's order source when available, otherwise only cancels / re-checks payment.
+ */
+async function syncOrder(s: ReturnType<typeof buildServices>, platforms: PlatformRegistry, event: PlatformEvent): Promise<void> {
+    const orderId = event.orderId!;
+    const existing = await s.fulfillmentRepository.get(event.tenantId, orderId);
+    const tenant = await s.tenants.getTenant(event.tenantId);
+    const adapter = tenant ? platforms.get(tenant.platform) : undefined;
+    const source = adapter?.orders?.({ tenantId: event.tenantId, integrationMode: tenant!.integrationMode, credentials: s.credentials });
+
+    if (!source) {
+        if (existing && event.type === 'ORDER_CANCELLED') await s.fulfillment.cancel(event.tenantId, orderId);
+        else if (existing) await s.fulfillment.refreshPayment(event.tenantId, orderId);
+        return;
+    }
+    const order = event.type === 'ORDER_CANCELLED' ? undefined : await source.getOrder(orderId);
+    if (!order || order.cancelled) {
+        if (existing && existing.status !== 'SHIPPED' && existing.status !== 'CANCELLED') await s.fulfillment.cancel(event.tenantId, orderId);
+        return;
+    }
+    if (order.lines.length === 0) return; // services only, nothing to purchase or pack
+    await s.fulfillment.upsertOrder(event.tenantId, { orderId: order.orderId, lines: order.lines, paymentInfo: order.paymentInfo });
+}
+
 /** Cron Trigger entry point (wrangler.jsonc → triggers.crons). */
 export async function handleScheduled(cron: string, scheduledTime: number, env: BackendEnv, ctx: WaitUntil): Promise<void> {
     await withDatabase(env, ctx, async (db) => {
-        const s = buildServices(db, env, createPlatformRegistry(env as Record<string, unknown>));
+        const s = buildServices(db, env, createPlatformRegistry(env as Record<string, unknown>, workerLogger));
         const scheduler = new ProcurementScheduler(s.tenants, s.pipelineFor, workerLogger);
         const when = new Date(scheduledTime);
         if (cron === CRON_SUPPLIER_STATUS) await scheduler.runSupplierStatusSync(when);

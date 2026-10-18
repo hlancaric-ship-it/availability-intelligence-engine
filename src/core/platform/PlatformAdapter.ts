@@ -5,7 +5,8 @@
  */
 import type { PaymentStatusPort } from '../fulfillment/FulfillmentService.js';
 import type { CommercePlatformPort } from '../procurement/ports.js';
-import type { StoreStockAdjustmentPayload } from '../procurement/types.js';
+import type { PaymentInfo, StoreStockAdjustmentPayload } from '../procurement/types.js';
+import type { FulfillmentLine } from '../fulfillment/types.js';
 
 export type IntegrationMode = 'api' | 'import';
 
@@ -56,8 +57,26 @@ export interface InstallResult {
 }
 
 export interface PlatformLifecyclePort {
-    /** Handles the platform's install callback (OAuth code exchange …). */
+    /** Handles the platform's install callback (OAuth code exchange …). Must be fast – platforms enforce deadlines. */
     install(request: Request): Promise<InstallResult>;
+    /**
+     * Optional slow follow-up run in the background right after install (register webhooks, obtain signing keys …).
+     * Returns credentials to MERGE into the stored ones (e.g. a webhook signature key).
+     */
+    afterInstall?(ctx: PlatformContext): Promise<Readonly<Record<string, string>> | void>;
+}
+
+/** One order in platform-neutral form, for the warehouse (FulfillmentService.upsertOrder). */
+export interface PlatformOrder {
+    orderId: string;
+    cancelled: boolean;
+    paymentInfo: PaymentInfo;
+    lines: FulfillmentLine[];
+}
+
+export interface PlatformOrderSourcePort {
+    /** undefined = order does not exist (deleted). */
+    getOrder(orderId: string): Promise<PlatformOrder | undefined>;
 }
 
 export interface PlatformAdapter {
@@ -66,6 +85,8 @@ export interface PlatformAdapter {
     readonly supportedModes: readonly IntegrationMode[];
     commerce(ctx: PlatformContext): CommercePlatformPort;
     payments(ctx: PlatformContext): PaymentStatusPort;
+    /** Optional: single order for the warehouse (webhook-driven sync). */
+    orders?(ctx: PlatformContext): PlatformOrderSourcePort;
     /** Optional: write-back (order status, stock). Absent = read-only integration. */
     outbound?(ctx: PlatformContext): PlatformOutboundPort;
     webhooks?: PlatformWebhookPort;

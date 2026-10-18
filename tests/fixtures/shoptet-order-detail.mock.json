@@ -1,0 +1,39 @@
+{
+  "data": {
+    "order": {
+      "code": "2017000092",
+      "creationTime": "2018-05-29T09:02:27+0200",
+      "changeTime": "2018-05-29T09:02:27+0200",
+      "status": {
+        "name": "Processing",
+        "id": -1
+      },
+      "paid": true,
+      "billingMethod": {
+        "id": 3,
+        "name": "Cash"
+      },
+      "paymentMethod": {
+        "guid": "1b02cb8e-d7b5-11e0-9a5c-feab5ed617ed",
+        "name": "Cash"
+      },
+      "cashDeskOrder": true,
+      "items": [
+        {
+          "itemId": 342,
+          "itemType": "product",
+          "productGuid": "1b02cb8e-d7b5-11e0-9a5c-feab5ed617ed",
+          "code": "40/ZEL",
+          "ean": "12345678901234",
+          "amount": 1,
+          "amountUnit": "ks",
+          "name": "Complete  + Addition to the name"
+        }
+      ]
+    }
+  },
+  "errors": null,
+  "metadata": {
+    "requestId": "019c8c34-64f3-7328-af43-bf1e34fa39d7"
+  }
+}
