@@ -19,7 +19,7 @@
   //   npx wrangler secret put ADMIN_API_TOKEN              (openssl rand -base64 48)
   //   npx wrangler secret put ADMIN_TENANT_ID
   "hyperdrive": [
-    { "binding": "HYPERDRIVE", "id": "REPLACE_WITH_HYPERDRIVE_ID" }
+    { "binding": "HYPERDRIVE", "id": "1b90f9181336471789937183583daa7b" }
   ],
   // Must match CRON_PLANNING / CRON_SUPPLIER_STATUS in src/platform/cloudflare/backend.ts.
   "triggers": { "crons": ["*/15 * * * *", "5 * * * *"] },
