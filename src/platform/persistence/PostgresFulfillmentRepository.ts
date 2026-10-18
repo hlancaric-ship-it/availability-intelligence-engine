@@ -10,7 +10,7 @@ interface OrderRow {
 }
 interface LineRow {
     order_id: string; customer_order_line_id: string; product_id: string; variant_id: string; sku: string; ean: string | null;
-    ordered_quantity: number | string; allocated_quantity: number | string; packed_quantity: number | string;
+    ordered_quantity: number | string; allocated_quantity: number | string; packed_quantity: number | string; own_stock_allocated: number | string | null;
 }
 
 /** PostgreSQL implementation of FulfillmentRepositoryPort (migration 005). Every query is filtered by tenant_id. */
@@ -57,13 +57,14 @@ export class PostgresFulfillmentRepository implements FulfillmentRepositoryPort 
             if ((res.rowCount ?? 0) !== 1) throw new ConcurrentModificationError(order.orderId);
             for (const l of order.lines) {
                 const lineRes = await tx.query(
-                    `INSERT INTO fulfillment_order_lines (tenant_id, order_id, customer_order_line_id, product_id, variant_id, sku, ean, ordered_quantity, allocated_quantity, packed_quantity)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                    `INSERT INTO fulfillment_order_lines (tenant_id, order_id, customer_order_line_id, product_id, variant_id, sku, ean, ordered_quantity, allocated_quantity, packed_quantity, own_stock_allocated)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
                      ON CONFLICT (tenant_id, customer_order_line_id) DO UPDATE SET product_id = EXCLUDED.product_id, variant_id = EXCLUDED.variant_id,
                        sku = EXCLUDED.sku, ean = EXCLUDED.ean, ordered_quantity = EXCLUDED.ordered_quantity,
-                       allocated_quantity = EXCLUDED.allocated_quantity, packed_quantity = EXCLUDED.packed_quantity
+                       allocated_quantity = EXCLUDED.allocated_quantity, packed_quantity = EXCLUDED.packed_quantity,
+                       own_stock_allocated = EXCLUDED.own_stock_allocated
                      WHERE fulfillment_order_lines.order_id = EXCLUDED.order_id`,
-                    [tenantId, order.orderId, l.customerOrderLineId, l.productId, l.variantId, l.sku, l.ean ?? null, l.orderedQuantity, l.allocatedQuantity, l.packedQuantity],
+                    [tenantId, order.orderId, l.customerOrderLineId, l.productId, l.variantId, l.sku, l.ean ?? null, l.orderedQuantity, l.allocatedQuantity, l.packedQuantity, l.ownStockAllocated ?? 0],
                 );
                 if ((lineRes.rowCount ?? 0) !== 1) throw new Error(`Line ${l.customerOrderLineId} belongs to another order`);
             }
@@ -78,7 +79,7 @@ export class PostgresFulfillmentRepository implements FulfillmentRepositoryPort 
             [tenantId, orderIds],
         );
         const lines = await tx.query<LineRow>(
-            `SELECT order_id, customer_order_line_id, product_id, variant_id, sku, ean, ordered_quantity, allocated_quantity, packed_quantity
+            `SELECT order_id, customer_order_line_id, product_id, variant_id, sku, ean, ordered_quantity, allocated_quantity, packed_quantity, own_stock_allocated
              FROM fulfillment_order_lines WHERE tenant_id = $1 AND order_id = ANY($2::text[]) ORDER BY customer_order_line_id`,
             [tenantId, orderIds],
         );
@@ -100,6 +101,7 @@ export class PostgresFulfillmentRepository implements FulfillmentRepositoryPort 
                 customerOrderLineId: l.customer_order_line_id, productId: l.product_id, variantId: l.variant_id, sku: l.sku,
                 ...(l.ean ? { ean: l.ean } : {}),
                 orderedQuantity: Number(l.ordered_quantity), allocatedQuantity: Number(l.allocated_quantity), packedQuantity: Number(l.packed_quantity),
+                ownStockAllocated: Number(l.own_stock_allocated ?? 0),
             });
         }
         // Keep the requested order (e.g. oldest first from listByStatus).

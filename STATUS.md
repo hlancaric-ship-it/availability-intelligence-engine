@@ -33,7 +33,7 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 |---|---|
 | S1 | Skutečné přihlášení do administrace (každý e-shop vidí jen svá data). |
 | I1 | Shoptet adaptér je napsaný (instalace, tokeny, webhooky, objednávky, platby), ale **neověřený** – chybí partnerský účet. |
-| I2 | Vlastní sklad se nepromítá do expedice (objednávka krytá jen vlastním skladem se neuvolní k balení). |
+| I2 | Shoptet: ověřit význam `claim` u skladu – pokud Shoptet už rezervuje kusy pro tytéž objednávky, adaptér by vlastní sklad podhodnotil a nakupoval zbytečně. |
 | I3 | Administrace napojená na skutečná data (dnes je `frontend/chytry-nakupci/demo` jen demo s ukázkovými daty). |
 | – | Převod stavu platby ze Shoptetu (API i CSV) do `PaymentInfo`. Bez něj se z bezpečnostních důvodů nic nenakoupí. |
 | – | Adaptér platformy pro `PaymentStatusPort` (čerstvý stav platby ze Shoptetu) a pro načtení objednávek do skladu (`FulfillmentService.upsertOrder`, včetně EAN). |

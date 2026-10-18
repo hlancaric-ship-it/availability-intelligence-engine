@@ -36,6 +36,12 @@ export class ProcurementWorkflow {
                 : new Map<string, number>();
             const plan = ProcurementEngine.plan(demands, await this.catalog.fetchOffers(), policy, `${tenantId}:${eventId}`, alreadyOrdered) // tenant-scoped PO/line IDs;
             await this.purchaseOrders.savePlan(tenantId, plan);
+            // Own stock promised to paid orders goes to the warehouse, so orders covered from stock get released for packing.
+            if (plan.ownStockReservations && this.readiness.reserveOwnStock) {
+                await this.readiness.reserveOwnStock(tenantId, plan.ownStockReservations);
+            } else if (plan.ownStockReservations?.some((r) => r.quantity > 0)) {
+                this.logger.warn('FulfillmentReadinessPort has no reserveOwnStock – orders covered from own stock stay locked', { tenantId, eventId });
+            }
             this.logger.info('Procurement plan created', { tenantId, eventId, newOrders: plan.purchaseOrders.length, unfulfilledCount: plan.unfulfilled.length });
             await this.audit.append({ tenantId, type: 'PROCUREMENT_PLAN_CREATED', entityId: eventId, payload: { purchaseOrders: plan.purchaseOrders.length, unfulfilled: plan.unfulfilled }, occurredAt: new Date().toISOString() });
 

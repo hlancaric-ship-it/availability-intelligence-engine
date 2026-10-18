@@ -19,7 +19,7 @@ import { SupplierIntegrationRegistry } from '../suppliers/SupplierIntegrationReg
 
 /** Bindings & secrets (wrangler.jsonc + `wrangler secret put`). */
 export interface BackendEnv {
-    /** Cloudflare Hyperdrive in front of PostgreSQL (migrations 001–006). */
+    /** Cloudflare Hyperdrive in front of PostgreSQL (migrations 001–007). */
     HYPERDRIVE?: { connectionString: string };
     /** 32 random bytes, base64 – encrypts platform credentials (OAuth tokens …). */
     CREDENTIALS_ENCRYPTION_KEY?: string;

@@ -71,7 +71,7 @@ systémové webhooky `addon:uninstall` a `addon:terminate` → `https://l-code-d
 oprávnění endpointů: objednávky (čtení), sklady (čtení), webhooky (zápis).
 
 **Nová zjištění do TODO:**
-- [ ] Jádro: vlastní sklad se zatím nepromítá do skladu expedice (`allocatedQuantity`) → objednávka plně krytá vlastním skladem se nikdy neuvolní k balení. Doplnit rezervaci vlastního skladu z plánu nákupu.
+- [x] Jádro: vlastní sklad se promítá do skladu expedice (`ownStockReservations` → `FulfillmentService.reserveOwnStock`, migrace 007). Rezervace je absolutní (opakované běhy nic nezdvojí), po začátku balení se nemění. Ověřeno celým průchodem proti PostgreSQL (`tests/OwnStock.test.ts`).
 - [ ] Zápis zpět do Shoptetu (stav objednávky, sklad) – adaptér je zatím jen pro čtení; mapování našich stavů na ID stavů e-shopu musí být nastavitelné.
 - [ ] `addon:suspend` / `addon:approve` (pozastavení doplňku) – dočasně vypnout plánovač pro e-shop.
 

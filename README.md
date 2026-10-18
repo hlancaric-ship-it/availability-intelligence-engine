@@ -45,7 +45,7 @@ Feedy / API dodavatelů         ──adaptér──▶ SupplierCatalogPort  ─
 - `src/platform/shoptet/` – adaptér Shoptetu (zatím jen čtení přes API a normalizace CSV/XML exportu).
 - `src/platform/suppliers/` – dodavatelé (obecný API klient, CSV bez API).
 - `src/platform/persistence/` – PostgreSQL; každý záznam je oddělen podle e-shopu (`tenant_id`).
-- `migrations/` – SQL migrace, spouštět v pořadí `001` → `005`.
+- `migrations/` – SQL migrace, spouštět v pořadí `001` → `007`.
 - `frontend/` – prezentační web a interaktivní demo s ukázkovými daty (nejde o administraci doplňku).
 
 - `src/core/platform/` – **obecné rozhraní platformy** (`PlatformAdapter`, `PlatformRegistry`).
@@ -90,7 +90,7 @@ Jeden Worker obsluhuje web, demo, API administrace (`/api/v1`), instalace a webh
 (`/platforms/...`) a plánovač (Cron Triggers).
 
 ```bash
-# 1) PostgreSQL (např. Neon / Supabase) – spustit migrace v pořadí 001 → 006
+# 1) PostgreSQL (např. Neon / Supabase) – spustit migrace v pořadí 001 → 007
 psql "$DATABASE_URL" -f migrations/001_procurement_core.sql   # … až 006
 
 # 2) Hyperdrive – vrácené id vložit do wrangler.jsonc (hyperdrive[0].id)

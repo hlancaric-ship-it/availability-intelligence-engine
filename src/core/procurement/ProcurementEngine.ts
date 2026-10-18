@@ -1,6 +1,6 @@
 import { SupplierSelectionEngine } from './SupplierSelectionEngine.js';
 import { isPaymentCleared } from './PaymentGate.js';
-import type { Allocation, CustomerOrderLine, GoodsReceiptLine, ProcurementPlan, ProcurementPolicy, PurchaseOrder, SupplierOffer } from './types.js';
+import type { Allocation, CustomerOrderLine, GoodsReceiptLine, OwnStockReservation, ProcurementPlan, ProcurementPolicy, PurchaseOrder, SupplierOffer } from './types.js';
 
 export class ProcurementEngine {
     /**
@@ -30,6 +30,7 @@ export class ProcurementEngine {
         }
         const bySupplier = new Map<string, PurchaseOrder>();
         const unfulfilled: ProcurementPlan['unfulfilled'] = [];
+        const ownStockReservations: OwnStockReservation[] = [];
 
         for (const demand of [...demands].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))) {
             const key = variantKey(demand);
@@ -39,11 +40,13 @@ export class ProcurementEngine {
                 if (waiting > 0) {
                     unfulfilled.push({ customerOrderLineId: demand.id, productId: demand.productId, variantId: demand.variantId, sku: demand.sku, quantity: waiting, reason: 'AWAITING_PAYMENT' });
                 }
+                ownStockReservations.push({ customerOrderLineId: demand.id, quantity: 0 });
                 continue;
             }
             const stockLeft = remainingOwnStock.get(key) ?? 0;
             const fromOwnStock = Math.min(stockLeft, demand.quantity);
             remainingOwnStock.set(key, stockLeft - fromOwnStock);
+            ownStockReservations.push({ customerOrderLineId: demand.id, quantity: fromOwnStock });
             const alreadyOrdered = Math.max(0, openProcurementByLine.get(demand.id) ?? 0);
             const deficit = Math.max(0, demand.quantity - fromOwnStock - alreadyOrdered);
             // SupplierSelectionEngine computes deficit as quantity - ownStockQuantity.
@@ -64,7 +67,7 @@ export class ProcurementEngine {
                 bySupplier.set(supplierId, order);
             }
         }
-        return { purchaseOrders: [...bySupplier.values()], unfulfilled };
+        return { purchaseOrders: [...bySupplier.values()], unfulfilled, ownStockReservations };
     }
 
     /** Allocates received units to the original customer lines; never allocates more than received or ordered. */

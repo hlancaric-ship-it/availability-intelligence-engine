@@ -27,6 +27,8 @@ export interface FulfillmentLine {
     orderedQuantity: number;
     /** Units physically available for this order (own stock reserved + received from suppliers). */
     allocatedQuantity: number;
+    /** Part of allocatedQuantity that comes from OWN stock (set by procurement planning, absolute). Default 0. */
+    ownStockAllocated?: number;
     /** Units confirmed by scanner into the parcel. */
     packedQuantity: number;
 }

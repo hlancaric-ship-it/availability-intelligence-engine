@@ -120,6 +120,16 @@ export interface PurchaseOrder {
 export interface ProcurementPlan {
     purchaseOrders: PurchaseOrder[];
     unfulfilled: UnfulfilledDemand[];
+    /**
+     * Units of OWN stock promised to each customer order line in this run (absolute, not a delta).
+     * Every planned line is listed – 0 releases an earlier reservation (e.g. payment no longer cleared).
+     */
+    ownStockReservations?: OwnStockReservation[];
+}
+
+export interface OwnStockReservation {
+    customerOrderLineId: string;
+    quantity: number;
 }
 
 export interface Allocation {

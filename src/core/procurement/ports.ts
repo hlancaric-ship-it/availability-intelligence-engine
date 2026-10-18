@@ -1,4 +1,4 @@
-import type { PurchaseOrder, SupplierStatusUpdate } from './types.js';
+import type { OwnStockReservation, PurchaseOrder, SupplierStatusUpdate } from './types.js';
 
 export interface CommercePlatformPort {
     fetchUnfulfilledOrderLines(): Promise<any[]>;
@@ -38,6 +38,8 @@ export interface FulfillmentReadinessPort {
      */
     markReadyToShip(tenantId: string, allocations: any[]): Promise<void>;
     reallocate?(tenantId: string, customerOrderLineId: string, newQuantity: number): Promise<void>;
+    /** Own-stock reservations from a plan (absolute per line). Reference implementation: FulfillmentService. */
+    reserveOwnStock?(tenantId: string, reservations: OwnStockReservation[]): Promise<void>;
 }
 
 export interface IdempotencyPort {

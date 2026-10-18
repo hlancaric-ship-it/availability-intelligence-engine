@@ -1,5 +1,5 @@
 import type { AuditPort, FulfillmentReadinessPort, LoggerPort } from '../procurement/ports.js';
-import type { Allocation, PaymentInfo } from '../procurement/types.js';
+import type { Allocation, OwnStockReservation, PaymentInfo } from '../procurement/types.js';
 import { FulfillmentEngine, FulfillmentLockedError } from './FulfillmentEngine.js';
 import { DEFAULT_FULFILLMENT_POLICY } from './types.js';
 import type { FulfillmentOrder, FulfillmentPolicy, ScanResult } from './types.js';
@@ -70,6 +70,7 @@ export class FulfillmentService implements FulfillmentReadinessPort {
             return {
                 ...l,
                 allocatedQuantity: Math.min(l.orderedQuantity, Math.max(l.allocatedQuantity, prev?.allocatedQuantity ?? 0)),
+                ownStockAllocated: Math.min(l.orderedQuantity, prev?.ownStockAllocated ?? l.ownStockAllocated ?? 0),
                 packedQuantity: Math.min(prev?.packedQuantity ?? 0, l.orderedQuantity),
             };
         });
@@ -93,6 +94,26 @@ export class FulfillmentService implements FulfillmentReadinessPort {
             if (updated === order) continue;
             await this.repository.save(tenantId, updated);
             await this.audit.append({ tenantId, type: 'FULFILLMENT_ALLOCATED', entityId: order.orderId, payload: { status: updated.status }, occurredAt: this.now() });
+        }
+    }
+
+    /**
+     * FulfillmentReadinessPort: own-stock reservations from a procurement plan (absolute per line).
+     * Lines the warehouse does not know yet are reported, not created (the order arrives via the platform sync).
+     */
+    public async reserveOwnStock(tenantId: string, reservations: OwnStockReservation[]): Promise<void> {
+        if (reservations.length === 0) return;
+        const policy = await this.policyFor(tenantId);
+        const planned = new Map(reservations.map((r) => [r.customerOrderLineId, r.quantity] as const));
+        const orders = await this.repository.findByCustomerLineIds(tenantId, [...planned.keys()]);
+        const known = new Set(orders.flatMap((o) => o.lines.map((l) => l.customerOrderLineId)));
+        const unknown = [...planned.entries()].filter(([id, qty]) => qty > 0 && !known.has(id)).map(([id]) => id);
+        if (unknown.length > 0) this.logger.warn('Own-stock reservation for order lines not in the warehouse yet', { tenantId, count: unknown.length });
+        for (const order of orders) {
+            const updated = FulfillmentEngine.applyOwnStock(order, planned, policy);
+            if (updated === order) continue;
+            await this.repository.save(tenantId, updated);
+            await this.audit.append({ tenantId, type: 'FULFILLMENT_OWN_STOCK_RESERVED', entityId: order.orderId, payload: { status: updated.status, lines: updated.lines.map((l) => ({ id: l.customerOrderLineId, ownStock: l.ownStockAllocated ?? 0 })) }, occurredAt: this.now() });
         }
     }
 

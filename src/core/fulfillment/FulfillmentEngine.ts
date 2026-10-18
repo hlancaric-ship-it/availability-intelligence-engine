@@ -65,6 +65,29 @@ export class FulfillmentEngine {
         return this.evaluate({ ...order, lines }, policy);
     }
 
+    /**
+     * Sets the OWN-stock reservation of each line to the planned absolute value and re-evaluates.
+     * allocated = (units received from suppliers) + (own stock reservation), capped at the ordered quantity.
+     * Once packing has started (or the order is shipped / cancelled) reservations are frozen – a parcel on the
+     * packing table is never re-locked by a later planning run.
+     */
+    public static applyOwnStock(order: FulfillmentOrder, reservations: ReadonlyMap<string, number>, policy: FulfillmentPolicy = DEFAULT_FULFILLMENT_POLICY): FulfillmentOrder {
+        if (FROZEN_FOR_RESERVATION.has(order.status)) return order;
+        let changed = false;
+        const lines = order.lines.map((l) => {
+            const planned = reservations.get(l.customerOrderLineId);
+            if (planned === undefined) return l;
+            if (!Number.isInteger(planned) || planned < 0) throw new Error(`Invalid own-stock reservation for ${l.customerOrderLineId}`);
+            const previous = l.ownStockAllocated ?? 0;
+            const next = Math.min(planned, l.orderedQuantity);
+            if (next === previous) return l;
+            changed = true;
+            const fromSuppliers = Math.max(0, l.allocatedQuantity - previous);
+            return { ...l, ownStockAllocated: next, allocatedQuantity: Math.min(l.orderedQuantity, fromSuppliers + next) };
+        });
+        return changed ? this.evaluate({ ...order, lines }, policy) : order;
+    }
+
     /** Replaces payment information (fresh from the platform) and re-evaluates. */
     public static withPayment(order: FulfillmentOrder, paymentInfo: FulfillmentOrder['paymentInfo'], policy: FulfillmentPolicy = DEFAULT_FULFILLMENT_POLICY): FulfillmentOrder {
         return this.evaluate({ ...order, paymentInfo }, policy);
@@ -115,6 +138,8 @@ export class FulfillmentEngine {
         return order.status === 'CANCELLED' ? order : { ...order, status: 'CANCELLED' };
     }
 }
+
+const FROZEN_FOR_RESERVATION: ReadonlySet<FulfillmentStatus> = new Set(['PACKING', 'PACKED', 'SHIPPED', 'CANCELLED']);
 
 export class FulfillmentLockedError extends Error {
     public constructor(public readonly orderId: string, public readonly blockers: FulfillmentBlocker[]) {
