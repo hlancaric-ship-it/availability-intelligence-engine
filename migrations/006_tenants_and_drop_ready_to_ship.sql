@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   -- Safe default: every purchase order waits for manual approval until the shop opts in to automatic mode.
   approval_mode      TEXT NOT NULL DEFAULT 'manual' CHECK (approval_mode IN ('automatic','manual')),
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   platform_shop_id   TEXT,                                -- shop ID on the platform (e.g. Shoptet eshopId), for webhooks
   UNIQUE (platform, platform_shop_id)
 );
