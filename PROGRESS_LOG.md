@@ -21,6 +21,25 @@ Provozní poznámky:
 - Spustit migrace `004` a `005` (004 maže jen nepřiřaditelná data, ostrá data zatím nejsou).
 - Po změnách webu nasadit `npm run deploy`.
 
+### Audit 2026-10-18 (2. kolo) – opraveno, zatím necommitnuto
+
+- Schválení nákupu: zámek `DISPATCH_PO` na úrovni PO → dvojí klik / dva uživatelé / hromadné + jednotlivé schválení už neodešlou objednávku dodavateli dvakrát.
+- Ruční změna množství a dodavatele jen u PO ve stavu `DRAFT` / `PENDING_APPROVAL`, jinak chyba (dřív se tiše měnila i už odeslaná objednávka).
+- Stav od dodavatele už neotevře zrušený / přijatý PO (`CANCELLED`, `RECEIVED`, `COMPLETED`).
+- Shoptet klient: hlavička `Content-Type: application/vnd.shoptet.v1.0`, `Retry-After` i jako HTTP datum.
+- Demo: obrázky z `placehold.co` nahrazeny lokálním SVG (CSP je blokovala, únik IP třetí straně); escapování `binLocation`.
+- `order-detail` odpověď s `Cache-Control: no-store`.
+- Testy: `tests/AuditFixes2026_10.test.ts`.
+
+Nová zjištění do TODO:
+- [ ] Shoptet: API token platí jen 30 min → klient musí dostat poskytovatele tokenu (OAuth token → `getAccessToken`, cache, obnova při 401 `expired-token`), ne statický řetězec.
+- [ ] `listStocks` vrací seznam skladů, ne množství – pro zásoby použít správný endpoint (ověřit v dokumentaci).
+- [ ] `DashboardHttpHandler` bez `authenticate` běží v režimu jednoho e-shopu → v produkci vynutit (fail-closed).
+- [ ] Idempotence: klíče zaseknuté v `PROCESSING` (pád procesu) se nikdy neuvolní → přidat časový limit.
+- [ ] Když dodavatel objednávku přijme, ale `markAsSent` selže, opakování ji odešle znovu → uložit `externalId` před potvrzením / outbox.
+- [ ] CSV dodavatelů: parser nepodporuje uvozovky (čárka v názvu/SKU rozbije řádek).
+- [ ] Retence a výmaz `procurement_audit_log` (GDPR, odinstalace).
+
 ### Zbývá udělat (v tomto pořadí)
 
 Rozhodnutí: služba je **backendový doplněk pro více platforem**, Shoptet je první adaptér. Partnerský účet
@@ -59,7 +78,7 @@ Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních b
 - [ ] K8: částky v haléřích (celá čísla) místo desetinných čísel.
 - [ ] K9: kontrola množství u prodejních jednotek.
 - [ ] K10: pravidla záloh svázat se správným e-shopem.
-- [ ] G4 (🟡): do logu u `PaymentInfo` zapisovat jen stav, ne částky.
+- [x] G4 (🟡): do logu u `PaymentInfo` zapisovat jen stav, ne částky (`redactSyncPayload`, 2026-10-18).
 
 **Před zveřejněním**
 - [ ] Projít znovu celý audit, aktualizovat README a STATUS.md.

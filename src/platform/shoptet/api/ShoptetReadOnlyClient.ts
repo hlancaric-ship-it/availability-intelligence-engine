@@ -46,13 +46,12 @@ export class ShoptetReadOnlyClient {
         const maxRetries = this.options.maxRetries ?? 3;
         const sleep = this.options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
         for (let attempt = 0; ; attempt++) {
-            const init: RequestInit = { method: 'GET', headers: { Accept: 'application/json', 'Shoptet-Access-Token': this.accessToken } };
+            const init: RequestInit = { method: 'GET', headers: { Accept: 'application/json', 'Content-Type': 'application/vnd.shoptet.v1.0', 'Shoptet-Access-Token': this.accessToken } };
             if (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal) init.signal = AbortSignal.timeout(this.options.timeoutMs ?? 30_000);
             const response = await this.request(url, init);
             // Respect Shoptet API rate limiting (429) and transient outages (503) with bounded backoff.
             if ((response.status === 429 || response.status === 503) && attempt < maxRetries) {
-                const retryAfter = Number(response.headers.get('Retry-After'));
-                const delayMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt;
+                const delayMs = this.retryDelayMs(response.headers.get('Retry-After'), attempt);
                 await sleep(Math.min(delayMs, 60_000));
                 continue;
             }
@@ -60,6 +59,17 @@ export class ShoptetReadOnlyClient {
             if (!response.ok) throw new Error(`Shoptet read failed: ${response.status} ${path}`);
             return response.json() as Promise<{ data: unknown }>;
         }
+    }
+
+    /** Retry-After may be delta-seconds or an HTTP date (Shoptet SDK documents a "Retry-After date"). */
+    private retryDelayMs(header: string | null, attempt: number): number {
+        const fallback = 1000 * 2 ** attempt;
+        if (!header) return fallback;
+        const seconds = Number(header);
+        if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+        const date = Date.parse(header);
+        if (Number.isFinite(date)) return Math.max(0, date - Date.now()) || fallback;
+        return fallback;
     }
 
     private object(value: unknown): Record<string, unknown> {

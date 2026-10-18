@@ -171,7 +171,7 @@ export class DashboardHttpHandler {
                 if (this.reader.getOrderDetail) {
                     const detail = await this.reader.getOrderDetail(tenantId, orderId);
                     if (detail) {
-                        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
                         res.end(JSON.stringify(detail));
                         return;
                     }

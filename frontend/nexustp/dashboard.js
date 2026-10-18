@@ -5,6 +5,12 @@ import { getViewMeta, UI_GUIDE, UI_LABELS } from './ui-config.js';
 function esc(value) {
     return String(value ?? '').replace(/[&<>"'`]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c]));
 }
+// Local SVG placeholder (data: URI). External placeholder services are blocked by CSP (img-src 'self' data:)
+// and would leak visitors' IPs to a third party.
+function placeholderImg(text, w, h) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="${Math.max(10, Math.round(Math.min(w, h) / 3))}" fill="#475569">${esc(text)}</text></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 // Safe JS string literal for use inside inline event-handler attributes (onclick="fn(${jsArg(x)})").
 function jsArg(value) {
     return esc(JSON.stringify(String(value ?? '')));
@@ -820,7 +826,7 @@ function renderApp(app) {
                                  <td><b>${esc(ord.customerName)}</b></td>
                                  <td>${ord.items.map(it => `
                                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                                         <img src="https://placehold.co/36x36/e2e8f0/0f172a?text=${encodeURIComponent(it.sku.slice(0,3))}" alt="${esc(it.productName)}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; border:1px solid var(--border-color);" />
+                                         <img src="${placeholderImg(it.sku.slice(0,3), 36, 36)}" alt="${esc(it.productName)}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; border:1px solid var(--border-color);" />
                                          <div><b>${esc(it.productName)}</b> &times; <b>${esc(it.required)} ks</b></div>
                                      </div>
                                  `).join('')}</td>
@@ -1047,10 +1053,10 @@ function openOrderDetailModal(order) {
                             return `
                             <div class="order-item">
                                 <div class="order-item-top">
-                                    <img class="product-thumb" src="https://placehold.co/48x48/e2e8f0/0f172a?text=${encodeURIComponent(it.sku.slice(0,2))}" alt="">
+                                    <img class="product-thumb" src="${placeholderImg(it.sku.slice(0,2), 48, 48)}" alt="">
                                     <div class="order-item-info">
                                         <span class="order-item-name">${esc(it.productName)}</span>
-                                        <span class="order-item-sku">${esc(it.sku)} · ${bin}</span>
+                                        <span class="order-item-sku">${esc(it.sku)} · ${esc(bin)}</span>
                                     </div>
                                     <span class="status-pill ${ready ? 'status-ready' : 'status-pending'}">${ready ? 'Skladem' : 'Čeká'}</span>
                                 </div>
@@ -1125,11 +1131,11 @@ function openOrderDetailModal(order) {
                     <div class="order-panel-head"><span class="order-panel-title">Fotodokumentace balení</span></div>
                     <div class="order-photo-grid">
                         <div class="order-photo-cell">
-                            <img src="https://placehold.co/200x150/e2e8f0/64748b?text=Balení" alt="Foto balení">
+                            <img src="${placeholderImg('Balení', 200, 150)}" alt="Foto balení">
                             <span class="photo-timestamp">14:32:05</span>
                         </div>
                         <div class="order-photo-cell">
-                            <img src="https://placehold.co/200x150/e2e8f0/64748b?text=Obsah" alt="Foto obsah">
+                            <img src="${placeholderImg('Obsah', 200, 150)}" alt="Foto obsah">
                             <span class="photo-timestamp">14:32:18</span>
                         </div>
                         <div class="order-photo-cell order-photo-cell--empty">

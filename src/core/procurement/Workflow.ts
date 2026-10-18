@@ -121,21 +121,31 @@ export class ProcurementWorkflow {
             this.logger.info('PO approval skipped (idempotent)', { tenantId, eventId, purchaseOrderId });
             return;
         }
+        let dispatchClaimed = false;
         try {
             this.logger.info('Approving PO', { tenantId, eventId, purchaseOrderId });
             await this.purchaseOrders.approve(tenantId, purchaseOrderId);
+            // Per-PO dispatch lock: two approvals with different eventIds (double click, two users, bulk + single)
+            // must never send the same PO to the supplier twice. approve() alone is only a status check.
+            if (!await this.idem_claim(tenantId, purchaseOrderId, 'DISPATCH_PO')) {
+                throw new Error(`Purchase order ${purchaseOrderId} is already being dispatched or was dispatched`);
+            }
+            dispatchClaimed = true;
             const orders = await this.purchaseOrders.getOrdersByIds(tenantId, [purchaseOrderId]);
             if (orders.length === 0) throw new Error(`Purchase order ${purchaseOrderId} not found`);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const order = orders[0]!;
             const result = await this.supplierDispatch.dispatchPurchaseOrder(order);
             await this.purchaseOrders.markAsSent(tenantId, purchaseOrderId, result.externalId);
+            await this.idem_complete(tenantId, purchaseOrderId, 'DISPATCH_PO');
+            dispatchClaimed = false;
             await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVED', entityId: eventId, payload: { purchaseOrderId, externalId: result.externalId }, occurredAt: new Date().toISOString() });
             await this.idem_complete(tenantId, eventId, 'APPROVE_PO');
             this.logger.info('PO approved and dispatched', { tenantId, eventId, purchaseOrderId });
         } catch (error) {
             const safeError = error instanceof Error ? error.message : 'Unknown error';
             this.logger.error('Failed to approve PO', { tenantId, eventId, purchaseOrderId, error: safeError });
+            if (dispatchClaimed) await this.idem_fail(tenantId, purchaseOrderId, 'DISPATCH_PO');
             await this.idem_fail(tenantId, eventId, 'APPROVE_PO');
             await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVAL_FAILED', entityId: eventId, payload: { purchaseOrderId, error: safeError }, occurredAt: new Date().toISOString() });
             throw error;

@@ -16,6 +16,12 @@ export interface ShoptetOutboundSyncPort {
 
 import type { LoggerPort, AuditPort } from '../../core/procurement/ports.js';
 
+/** G4: logs/audit get only payment status + method, never amounts (financial data minimisation). */
+export function redactSyncPayload(payload: ShoptetOutboundSyncPayload): Omit<ShoptetOutboundSyncPayload, 'paymentInfo'> & { paymentInfo?: { paymentStatus: string; paymentMethod: string } } {
+    const { paymentInfo, ...rest } = payload;
+    return paymentInfo ? { ...rest, paymentInfo: { paymentStatus: paymentInfo.paymentStatus, paymentMethod: paymentInfo.paymentMethod } } : rest;
+}
+
 export class MockShoptetOutboundAdapter implements ShoptetOutboundSyncPort {
     private readonly syncedPayloads: ShoptetOutboundSyncPayload[] = [];
     public shouldFail = false;
@@ -27,7 +33,7 @@ export class MockShoptetOutboundAdapter implements ShoptetOutboundSyncPort {
 
     public async syncOrderStatus(tenantId: string, payload: ShoptetOutboundSyncPayload): Promise<{ success: boolean; externalSyncId: string }> {
         if (this.shouldFail) {
-            this.logger.error('Mock Shoptet outbound sync failed (simulated)', { tenantId, payload });
+            this.logger.error('Mock Shoptet outbound sync failed (simulated)', { tenantId, payload: redactSyncPayload(payload) });
             throw new Error('Simulated Shoptet API network failure');
         }
 
@@ -37,14 +43,14 @@ export class MockShoptetOutboundAdapter implements ShoptetOutboundSyncPort {
         this.logger.info('Mock Shoptet outbound sync successful (read-only safe simulation)', {
             tenantId,
             externalSyncId,
-            payload,
+            payload: redactSyncPayload(payload),
         });
 
         await this.audit.append({
             tenantId,
             type: 'SHOPTET_OUTBOUND_SYNC_SUCCESS',
             entityId: payload.orderId,
-            payload: { ...payload, externalSyncId },
+            payload: { ...redactSyncPayload(payload), externalSyncId },
             occurredAt: new Date().toISOString(),
         });
 
