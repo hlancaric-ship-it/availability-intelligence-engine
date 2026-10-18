@@ -10,8 +10,8 @@ export interface SupplierCatalogPort {
 
 export interface PurchaseOrderPort {
     savePlan(tenantId: string, plan: any): Promise<void>;
-    markAsSent(orderId: string): Promise<void>;
-    recordReceipt(receipt: any[]): Promise<void>;
+    markAsSent(tenantId: string, orderId: string): Promise<void>;
+    recordReceipt(tenantId: string, receipt: any[]): Promise<void>;
     getOrdersByIds(tenantId: string, orderIds: string[]): Promise<PurchaseOrder[]>;
     cancel(tenantId: string, orderId: string): Promise<void>;
     approve(tenantId: string, orderId: string): Promise<void>;

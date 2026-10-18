@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { join, extname } from 'node:path';
+import { join, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DashboardHttpHandler } from '../src/platform/operations/DashboardEndpoint.js';
 import type { DashboardReaderPort, DashboardData, CustomerOrderDetail } from '../src/platform/operations/DashboardEndpoint.js';
@@ -12,7 +12,7 @@ class MockDashboardReader implements DashboardReaderPort {
     private readonly orders: CustomerOrderDetail[] = [
         {
             orderId: 'OBJ-2026-001245',
-            customerName: 'Jan Novák (cistytriko.cz)',
+            customerName: 'Jan Novák',
             status: 'READY_TO_FULFILL',
             items: [
                 { sku: 'TRIKO-BASIC-BLK-M', productName: 'Čistý triko Basic Černé (velikost M)', required: 2, stock: 0, incoming: 2, allocated: 2 },
@@ -36,7 +36,7 @@ class MockDashboardReader implements DashboardReaderPort {
         },
         {
             orderId: 'OBJ-2026-001246',
-            customerName: 'Petra Dvořáková (ZP Florence)',
+            customerName: 'Petra Dvořáková',
             status: 'WAITING_FOR_STOCK',
             items: [
                 { sku: 'MED-BANDAGE-10CM', productName: 'Elastické obinadlo 10cm', required: 10, stock: 2, incoming: 8, allocated: 2 },
@@ -55,7 +55,7 @@ class MockDashboardReader implements DashboardReaderPort {
         },
         {
             orderId: 'OBJ-2026-001247',
-            customerName: 'Karel Vlček (cistytriko.cz)',
+            customerName: 'Karel Vlček',
             status: 'READY_TO_SHIP',
             items: [
                 { sku: 'BATOH-35L-OLV', productName: 'Taktický batoh 35L Olive Green', required: 1, stock: 0, incoming: 1, allocated: 1 },
@@ -73,7 +73,7 @@ class MockDashboardReader implements DashboardReaderPort {
         },
         {
             orderId: 'OBJ-2026-001248',
-            customerName: 'Martina Malá (ZP Florence)',
+            customerName: 'Martina Malá',
             status: 'READY_TO_SHIP',
             items: [
                 { sku: 'SOCK-TERMO-L', productName: 'Termo ponožky merino (velikost L)', required: 6, stock: 6, incoming: 0, allocated: 6 },
@@ -157,6 +157,9 @@ const mimeTypes: Record<string, string> = {
 };
 
 const server = createServer(async (req, res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
 
     if (url.pathname.startsWith('/internal/procurement/')) {
@@ -171,7 +174,12 @@ const server = createServer(async (req, res) => {
     }
 
     let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
-    const fullPath = join(frontendDir, filePath);
+    const fullPath = resolve(frontendDir, '.' + filePath);
+    if (!fullPath.startsWith(resolve(frontendDir) + sep)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Forbidden');
+        return;
+    }
     const ext = extname(fullPath);
 
     try {

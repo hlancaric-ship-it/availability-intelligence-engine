@@ -56,7 +56,7 @@ export const UI_BRAND = {
 };
 
 export const UI_TENANT = {
-    name: 'Čistý triko / ZP Florence',
+    name: 'Ukázkový e-shop',
     sandboxLabel: '100% Sandbox mód',
     sandboxIcon: '🔒',
     dotColor: '#22C55E',

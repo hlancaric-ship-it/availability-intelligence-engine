@@ -34,7 +34,7 @@ export class ProcurementWorkflow {
                 try {
                     this.logger.info('Dispatching PO', { tenantId, eventId, orderId: order.id, supplierId: order.supplierId });
                     const result = await this.supplierDispatch.dispatchPurchaseOrder(order);
-                    await this.purchaseOrders.markAsSent(order.id);
+                    await this.purchaseOrders.markAsSent(tenantId, order.id);
                     await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_DISPATCHED', entityId: eventId, payload: { orderId: order.id, externalId: result.externalId }, occurredAt: new Date().toISOString() });
                     await this.idempotency.complete(order.id, 'DISPATCH_PO');
                     this.logger.info('PO dispatched successfully', { tenantId, eventId, orderId: order.id });
@@ -68,7 +68,7 @@ export class ProcurementWorkflow {
             const orderIds = Array.from(new Set(receipt.map((r) => r.purchaseOrderId)));
             const orders = await this.purchaseOrders.getOrdersByIds(tenantId, orderIds);
             const allocations = ProcurementEngine.receive(orders, receipt);
-            await this.purchaseOrders.recordReceipt(receipt);
+            await this.purchaseOrders.recordReceipt(tenantId, receipt);
             await this.readiness.markReadyToShip(allocations);
             await this.audit.append({ tenantId, type: 'GOODS_RECEIVED', entityId: eventId, payload: { allocationsCount: allocations.length }, occurredAt: new Date().toISOString() });
             await this.idempotency.complete(eventId, 'GOODS_RECEIPT');
@@ -116,7 +116,7 @@ export class ProcurementWorkflow {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const order = orders[0]!;
             const result = await this.supplierDispatch.dispatchPurchaseOrder(order);
-            await this.purchaseOrders.markAsSent(purchaseOrderId);
+            await this.purchaseOrders.markAsSent(tenantId, purchaseOrderId);
             await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVED', entityId: eventId, payload: { purchaseOrderId, externalId: result.externalId }, occurredAt: new Date().toISOString() });
             await this.idempotency.complete(eventId, 'APPROVE_PO');
             this.logger.info('PO approved and dispatched', { tenantId, eventId, purchaseOrderId });

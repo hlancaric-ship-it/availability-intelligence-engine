@@ -115,11 +115,28 @@ export class DashboardHttpHandler {
     public constructor(
         private readonly reader: DashboardReaderPort,
         private readonly defaultTenantId: string = 'default',
+        /**
+         * Resolves the tenant from an authenticated credential (session/token).
+         * Returns null when the request is not authenticated. When omitted, the handler
+         * runs in single-tenant mode bound to defaultTenantId. The tenant is NEVER taken
+         * from client-controlled query params or headers (IDOR protection).
+         */
+        private readonly authenticate?: (req: IncomingMessage) => Promise<string | null>,
     ) {}
 
     public async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
-        const tenantId = url.searchParams.get('tenantId') ?? (req.headers['x-tenant-id'] as string) ?? this.defaultTenantId;
+        let tenantId = this.defaultTenantId;
+        if (this.authenticate) {
+            let resolved: string | null = null;
+            try { resolved = await this.authenticate(req); } catch { resolved = null; }
+            if (!resolved) {
+                res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            tenantId = resolved;
+        }
 
         // GET /internal/procurement/dashboard
         if (req.method === 'GET' && url.pathname === '/internal/procurement/dashboard') {
@@ -131,9 +148,10 @@ export class DashboardHttpHandler {
                 });
                 res.end(JSON.stringify(data));
             } catch (err) {
-                const message = err instanceof Error ? err.message : 'Unknown error';
-                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ error: message }));
+                // Do not leak internal error details (SQL, stack, hosts) to the client.
+                console.error('Dashboard endpoint failure', err);
+                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+                res.end(JSON.stringify({ error: 'Internal Server Error' }));
             }
             return;
         }
@@ -141,9 +159,9 @@ export class DashboardHttpHandler {
         // GET /internal/procurement/order-detail?orderId=...
         if (req.method === 'GET' && url.pathname === '/internal/procurement/order-detail') {
             const orderId = url.searchParams.get('orderId');
-            if (!orderId) {
+            if (!orderId || orderId.length > 128 || !/^[\w.:-]+$/.test(orderId)) {
                 res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ error: 'Missing orderId parameter' }));
+                res.end(JSON.stringify({ error: 'Missing or invalid orderId parameter' }));
                 return;
             }
 
@@ -159,9 +177,10 @@ export class DashboardHttpHandler {
                 res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({ error: 'Order not found' }));
             } catch (err) {
-                const message = err instanceof Error ? err.message : 'Unknown error';
-                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ error: message }));
+                // Do not leak internal error details (SQL, stack, hosts) to the client.
+                console.error('Dashboard endpoint failure', err);
+                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+                res.end(JSON.stringify({ error: 'Internal Server Error' }));
             }
             return;
         }

@@ -185,7 +185,7 @@ describe('ProcurementWorkflow Resilience', () => {
 
         expect(purchaseOrders.approve).toHaveBeenCalledWith('t1', 'po-pending-1');
         expect(supplierDispatch.dispatchPurchaseOrder).toHaveBeenCalledWith(po);
-        expect(purchaseOrders.markAsSent).toHaveBeenCalledWith('po-pending-1');
+        expect(purchaseOrders.markAsSent).toHaveBeenCalledWith(expect.any(String), 'po-pending-1');
         expect(audit.append).toHaveBeenCalledWith(expect.objectContaining({ type: 'PURCHASE_ORDER_APPROVED' }));
 
         // Idempotency: second call is skipped

@@ -1,3 +1,11 @@
+/** Neutralises CSV/formula injection (=,+,-,@,tab,CR) and quotes cells containing separators. */
+export function csvCell(value: string): string {
+    let v = String(value);
+    if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`;
+    if (/[",\r\n]/.test(v)) v = `"${v.replace(/"/g, '""')}"`;
+    return v;
+}
+
 import type { PurchaseOrder, SupplierOffer, GoodsReceiptLine } from '../../core/procurement/types.js';
 
 /**
@@ -12,7 +20,7 @@ export class NoApiCsvAdapter {
      */
     public exportPurchaseOrder(order: PurchaseOrder): string {
         const header = 'supplierSku,quantity';
-        const rows = order.lines.map((line) => `${line.supplierSku},${line.quantity}`);
+        const rows = order.lines.map((line) => `${csvCell(line.supplierSku)},${line.quantity}`);
         return [header, ...rows].join('\n');
     }
 
@@ -29,15 +37,19 @@ export class NoApiCsvAdapter {
             if (!supplierSku || !productId || !variantId || !currency) {
                 throw new Error('Invalid CSV format: Missing required string fields');
             }
+            const qty = Number(availableQuantity), price = Number(unitPrice), lead = Number(leadTimeDays);
+            if (!Number.isInteger(qty) || qty < 0) throw new Error('Invalid CSV: availableQuantity must be a non-negative integer');
+            if (!Number.isFinite(price) || price < 0) throw new Error('Invalid CSV: unitPrice must be a non-negative number');
+            if (!Number.isInteger(lead) || lead < 0) throw new Error('Invalid CSV: leadTimeDays must be a non-negative integer');
             return {
                 supplierId,
                 supplierSku: supplierSku.trim(),
                 productId: productId.trim(),
                 variantId: variantId.trim(),
-                availableQuantity: Number(availableQuantity),
-                unitPrice: Number(unitPrice),
+                availableQuantity: qty,
+                unitPrice: price,
                 currency: currency.trim(),
-                leadTimeDays: Number(leadTimeDays),
+                leadTimeDays: lead,
                 active: true
             };
         });
@@ -56,10 +68,12 @@ export class NoApiCsvAdapter {
             if (!purchaseOrderId || !procurementLineId) {
                 throw new Error('Invalid CSV format: Missing required fields in goods receipt');
             }
+            const qty = Number(receivedQuantity);
+            if (!Number.isInteger(qty) || qty <= 0) throw new Error('Invalid CSV: receivedQuantity must be a positive integer');
             return {
                 purchaseOrderId: purchaseOrderId.trim(),
                 procurementLineId: procurementLineId.trim(),
-                receivedQuantity: Number(receivedQuantity)
+                receivedQuantity: qty
             };
         });
     }

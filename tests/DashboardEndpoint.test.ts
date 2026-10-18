@@ -99,7 +99,8 @@ describe('Phase 4 - DashboardHttpHandler', () => {
 
         await handler.handleRequest(req, res);
 
-        expect(mockReader.getDashboardData).toHaveBeenCalledWith('custom-tenant');
+        // Client-supplied tenantId must be ignored (IDOR protection).
+        expect(mockReader.getDashboardData).toHaveBeenCalledWith('test-tenant');
         expect(responseStatus).toBe(200);
         expect(responseHeaders['Content-Type']).toContain('application/json');
         expect(JSON.parse(responseBody)).toEqual(expectedData);
@@ -159,7 +160,7 @@ describe('Phase 4 - DashboardHttpHandler', () => {
         await handler.handleRequest(req, res);
 
         expect(responseStatus).toBe(500);
-        expect(JSON.parse(responseBody)).toEqual({ error: 'DB failure' });
+        expect(JSON.parse(responseBody)).toEqual({ error: 'Internal Server Error' });
     });
 
     test('handles GET /internal/procurement/order-detail with 200 JSON', async () => {
@@ -244,6 +245,6 @@ describe('Phase 4 - DashboardHttpHandler', () => {
         await handler.handleRequest(req, res);
 
         expect(responseStatus).toBe(400);
-        expect(JSON.parse(responseBody)).toEqual({ error: 'Missing orderId parameter' });
+        expect(JSON.parse(responseBody)).toEqual({ error: 'Missing or invalid orderId parameter' });
     });
 });

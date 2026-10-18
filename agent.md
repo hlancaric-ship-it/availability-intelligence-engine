@@ -14,7 +14,7 @@ Systém zajišťuje:
 - retry a rekonciliaci
 - auditovatelnost a idempotentní workflow
 
-**Tenant model:** stejný engine je konfigurovatelný pro více tenantů (ZP Florence, cistytriko.cz, …) bez zákaznických výjimek v core logice.
+**Tenant model:** stejný engine je konfigurovatelný pro více tenantů (více e-shopů) bez zákaznických výjimek v core logice.
 
 ---
 
@@ -1286,7 +1286,7 @@ Vysvětlení musí být **přímo tam, kde ho uživatel potřebuje.**
 
 UI má být čisté, přehledné a profesionální.
 
-Inspiruj se vizuálním jazykem moderního e-commerce prostředí a referenčním vzhledem `cistytriko.cz`, který byl pro tento produkt určen jako designový směr.
+Inspiruj se vizuálním jazykem moderního e-commerce prostředí a referenčním vzhledem, který byl pro tento produkt určen jako designový směr.
 
 Neznamená to kopírovat jejich web.
 
