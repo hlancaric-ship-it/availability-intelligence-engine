@@ -1,5 +1,71 @@
 # AIE Progress Log
 
+## 2026-10-18 — Audit a opravy (L-Code Chytrý nákupčí)
+
+> Záznam níže z 2026-08-31 („PRODUCTION READY“) **už neplatí** – týkal se jen dema s ukázkovými daty.
+> Skutečný stav: [STATUS.md](STATUS.md). Doplněk zatím **není připraven ke zveřejnění**.
+
+### Hotovo (na GitHubu, `master`)
+
+| Commit | Co |
+|---|---|
+| `94dab81`, `d892e5e` | K1, K2: žádný dvojí nákup mezi běhy, sdílený vlastní sklad; validace množství, opakování po chybě |
+| `1d4f9d7` | K6, K7: stavy od dodavatele podle jeho čísla objednávky; oddělení dat e-shopů (ID, idempotence, dashboard); migrace 004 |
+| `71b99d7` | Odstraněn Google Analytics, počítadlo návštěv a Google Fonts (fonty lokálně); přísnější CSP → web bez cookies |
+| `9010000` | Přejmenování na **L-Code Chytrý nákupčí** (texty; URL `/nexus`, `/nexustp` zůstaly) |
+| `d6673b4` | Kontrola platby: nakupovat, rezervovat sklad a expedovat jen zaplacené nebo dobírku (nastavitelné pro e-shop) |
+| `9c444fe` | D1: pravdivý README a STATUS.md místo FINAL_STATUS.md; web „pro e-shopy“, ne jen Shoptet |
+| `13cb037` | Sklad a expedice: bezpečnostní zámek, balení a příjem skenerem, odeslání, hromadné akce; migrace 005 |
+
+Provozní poznámky:
+- Spustit migrace `004` a `005` (004 maže jen nepřiřaditelná data, ostrá data zatím nejsou).
+- Po změnách webu nasadit `npm run deploy`.
+
+### Zbývá udělat (v tomto pořadí)
+
+Rozhodnutí: služba je **backendový doplněk pro více platforem**, Shoptet je první adaptér. Partnerský účet
+Shoptetu zatím **nemáme** → vše kolem Shoptetu se připraví podle dokumentace a ověří se, až účet bude.
+Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních balíků (částečnou lze zapnout).
+
+**Krok 2 – HTTP API administrace a automatika**
+- [ ] API pro všechny obrazovky: přehled, objednávky (detail + časová osa), dostupnost, nákup, příjem, dodavatelé, mapování produktů, feedy, pravidla, audit.
+- [ ] API pro sklad: sken při příjmu a balení, odeslání, hromadné akce (`shipMany`, `approvePurchaseOrders`).
+- [ ] Dashboard přepojit ze staré tabulky `procurement_ready_to_ship` na `fulfillment_orders` (pak starou tabulku zrušit).
+- [ ] Plánovač automatických běhů (stažení objednávek → plán nákupu → odeslání → stavy od dodavatelů).
+- [ ] Validace vstupů, limity velikosti požadavků, jednotné chybové odpovědi.
+
+**Krok 3 – Přihlášení (S1) a skutečná administrace**
+- [ ] Přihlášení; každý uživatel vidí jen data svého e-shopu (tenant z relace, nikdy z parametru).
+- [ ] Napojit demo `/nexustp` na API místo ukázkových dat.
+- [ ] Skenování v prohlížeči (čtečka jako klávesnice) se zvukovým varováním při chybě.
+- [ ] Odstranit inline `onclick` z `dashboard.js` → pak z CSP zmizí `'unsafe-inline'`.
+
+**Krok 4 – Obecné rozhraní platformy + adaptér Shoptetu (I1–I3, bez ověření do získání účtu)**
+- [ ] Obecné rozhraní: instalace/odinstalace, webhooky, načtení objednávek, stav platby, zápis stavů a skladu.
+- [ ] Shoptet: instalace přes OAuth, bezpečné uložení tokenu (ne `InMemoryTenantSecretsManager`), smazání dat po odinstalaci (GDPR).
+- [ ] Shoptet: ověření podpisu webhooků, idempotentní zpracování.
+- [ ] Shoptet: převod objednávek do `CustomerOrderLine` a `FulfillmentService.upsertOrder` (včetně EAN).
+- [ ] Shoptet: `PaymentStatusPort` – převod stavu platby do `PaymentInfo` (API i CSV). **Bez toho se nic nenakoupí ani neodešle.**
+- [ ] Shoptet: zápis stavů objednávek a skladu zpět (dnes `ShoptetOutboundSync` jen simulace); klient zatím umí jen GET.
+- [ ] Dodržet limity Shoptet API (už v `ShoptetReadOnlyClient`), přidat i pro zápis.
+- [ ] Podklady pro schválení v doplňkovém marketplace: popis, ikona, zásady zpracování osobních údajů, podpora.
+
+**Krok 5 – Přepravci a štítky**
+- [ ] Zjistit, zda jde štítky řešit přes Shoptet; jinak API přepravců (Zásilkovna, PPL, DPD, … – **potřeba seznam používaných přepravců**).
+- [ ] Tisk štítků, hromadný tisk, číslo zásilky do `FulfillmentService.ship`.
+
+**Krok 6 – Dodavatelé a zbývající opravy**
+- [ ] Odesílání nákupů dodavatelům: e-mail / formáty dodavatelů (**potřeba seznam dodavatelů a jejich požadavků**).
+- [ ] K8: částky v haléřích (celá čísla) místo desetinných čísel.
+- [ ] K9: kontrola množství u prodejních jednotek.
+- [ ] K10: pravidla záloh svázat se správným e-shopem.
+- [ ] G4 (🟡): do logu u `PaymentInfo` zapisovat jen stav, ne částky.
+
+**Před zveřejněním**
+- [ ] Projít znovu celý audit, aktualizovat README a STATUS.md.
+- [ ] Ověřit na testovacím e-shopu Shoptetu (instalace → objednávka → nákup → příjem → balení → odeslání → odinstalace).
+
+
 ## 2026-08-31 23:10 — UI Finalization Sprint
 
 ### Context
