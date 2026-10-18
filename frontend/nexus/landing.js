@@ -66,16 +66,3 @@ document.querySelectorAll('.faq-q').forEach((btn) => {
     update();
 })();
 
-// Visit counter (shared endpoint with main site)
-(function () {
-    const wrap = document.getElementById('visitCountWrap');
-    if (!wrap) return;
-    fetch('/api/visit?page=nexus')
-        .then((r) => r.json())
-        .then((data) => {
-            if (typeof data.count === 'number') {
-                wrap.textContent = ` · ${data.count.toLocaleString('cs-CZ')} návštěv`;
-            }
-        })
-        .catch(() => {});
-})();

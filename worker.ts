@@ -12,30 +12,17 @@ const OLD_SANDBOX_ASSETS = new Set([
   'styles.css',
 ]);
 
-const GA4_MEASUREMENT_ID = 'G-ERVNKX76VF';
-
-const GA4_SNIPPET = `
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', '${GA4_MEASUREMENT_ID}');
-</script>
-`;
-
-// Security headers applied to every response. GA4 + Google Fonts are allow-listed because the
-// pages currently load them. 'unsafe-inline' in script-src is required by the inline gtag snippet and the
+// Security headers applied to every response. No third-party scripts, fonts or analytics are loaded
+// (backend add-on; no tracking → no cookie consent needed). 'unsafe-inline' in script-src is still required by the
 // inline onclick handlers in nexustp/dashboard.js – remove it once those are migrated to addEventListener.
 const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https://www.googletagmanager.com https://*.google-analytics.com",
-    "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
+    "img-src 'self' data:",
+    "connect-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -57,21 +44,6 @@ function withSecurityHeaders(response: Response): Response {
 function redirect(url: URL, pathname: string, status = 308): Response {
   url.pathname = pathname;
   return Response.redirect(url.toString(), status);
-}
-
-class HeadInjector {
-  private snippet: string;
-  private injected = false;
-
-  constructor(snippet: string) {
-    this.snippet = snippet;
-  }
-
-  element(element: Element) {
-    if (this.injected) return;
-    this.injected = true;
-    element.prepend(this.snippet, { html: true });
-  }
 }
 
 export default {
@@ -100,12 +72,5 @@ async function route(request: Request, env: Env): Promise<Response> {
       }
     }
 
-    const response = await env.ASSETS.fetch(request);
-
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('text/html')) return response;
-
-    return new HTMLRewriter()
-      .on('head', new HeadInjector(GA4_SNIPPET))
-      .transform(response);
+    return env.ASSETS.fetch(request);
 }
