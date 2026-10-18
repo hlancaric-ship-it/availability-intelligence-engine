@@ -3,6 +3,10 @@ import type { Allocation, CustomerOrderLine, GoodsReceiptLine, ProcurementPlan, 
 
 export class ProcurementEngine {
     public static plan(demands: CustomerOrderLine[], offers: SupplierOffer[], policy: ProcurementPolicy, eventId: string): ProcurementPlan {
+        for (const demand of demands) {
+            if (!Number.isInteger(demand.quantity) || demand.quantity < 0) throw new Error(`Invalid demand ${demand.id}: quantity must be a non-negative integer`);
+            if (!Number.isInteger(demand.ownStockQuantity) || demand.ownStockQuantity < 0) throw new Error(`Invalid demand ${demand.id}: ownStockQuantity must be a non-negative integer`);
+        }
         const reserved = new Map<string, number>();
         const bySupplier = new Map<string, PurchaseOrder>();
         const unfulfilled: ProcurementPlan['unfulfilled'] = [];
