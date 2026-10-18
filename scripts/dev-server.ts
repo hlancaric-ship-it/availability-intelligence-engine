@@ -173,7 +173,13 @@ const server = createServer(async (req, res) => {
         return;
     }
 
-    let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
+    if (url.pathname === '/') {
+        res.writeHead(302, { Location: '/nexustp/' });
+        res.end();
+        return;
+    }
+    // Directory URLs (e.g. /nexustp/) serve their index.html, like Cloudflare static assets.
+    let filePath = url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname;
     const fullPath = resolve(frontendDir, '.' + filePath);
     if (!fullPath.startsWith(resolve(frontendDir) + sep)) {
         res.writeHead(403, { 'Content-Type': 'text/plain' });
