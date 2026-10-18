@@ -95,8 +95,10 @@ export class PostgresDashboardReader implements DashboardReaderPort {
             const readyQuery = await tx.query<{ customer_order_line_id: string; allocated_quantity: string; ready_at: string }>(
                 `SELECT customer_order_line_id, allocated_quantity, ready_at
                  FROM procurement_ready_to_ship
+                 WHERE tenant_id = $1
                  ORDER BY ready_at DESC
                  LIMIT 50`,
+                [tenantId],
             );
             const ready: DashboardItem[] = (readyQuery.rows ?? []).map((row) => ({
                 id: row.customer_order_line_id,

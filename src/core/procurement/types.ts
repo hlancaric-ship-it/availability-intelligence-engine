@@ -133,6 +133,10 @@ export interface ProcurementPolicy {
 }
 
 export interface SupplierStatusUpdate {
+    /** Supplier-side order ID (as returned by dispatchPurchaseOrder). */
     externalId: string;
+    /** Our purchase order ID, if the supplier integration knows it. Preferred over externalId lookup. */
+    purchaseOrderId?: string;
+    supplierId?: string;
     status: 'ACCEPTED' | 'SHIPPED' | 'CANCELLED';
 }
