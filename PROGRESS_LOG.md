@@ -40,18 +40,25 @@ Nová zjištění do TODO:
 - [ ] CSV dodavatelů: parser nepodporuje uvozovky (čárka v názvu/SKU rozbije řádek).
 - [ ] Retence a výmaz `procurement_audit_log` (GDPR, odinstalace).
 
+### Krok 2 + obecné rozhraní platforem (2026-10-18)
+
+- Backend běží na **Cloudflare Workers**; databáze **PostgreSQL přes Hyperdrive** (beze změny migrací 001–005, nová 006).
+- Všechno je napojené přes **obecný adaptér platformy** – Shoptet bude první `PlatformAdapter`, další platforma = nový adaptér + `platforms.register(...)`, jádro / API / plánovač / webhooky se nemění. Dokud adaptér chybí, je vše fail-safe (neznámá platba ⇒ objednávka zůstane zamčená, plánovač e-shop přeskočí).
+- Přihlášení do API je **prozatímní** (jeden Bearer token → jeden e-shop) – nahradí ho S1.
+- Testy: `tests/Backend.test.ts`.
+
 ### Zbývá udělat (v tomto pořadí)
 
 Rozhodnutí: služba je **backendový doplněk pro více platforem**, Shoptet je první adaptér. Partnerský účet
 Shoptetu zatím **nemáme** → vše kolem Shoptetu se připraví podle dokumentace a ověří se, až účet bude.
 Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních balíků (částečnou lze zapnout).
 
-**Krok 2 – HTTP API administrace a automatika**
-- [ ] API pro všechny obrazovky: přehled, objednávky (detail + časová osa), dostupnost, nákup, příjem, dodavatelé, mapování produktů, feedy, pravidla, audit.
-- [ ] API pro sklad: sken při příjmu a balení, odeslání, hromadné akce (`shipMany`, `approvePurchaseOrders`).
-- [ ] Dashboard přepojit ze staré tabulky `procurement_ready_to_ship` na `fulfillment_orders` (pak starou tabulku zrušit).
-- [ ] Plánovač automatických běhů (stažení objednávek → plán nákupu → odeslání → stavy od dodavatelů).
-- [ ] Validace vstupů, limity velikosti požadavků, jednotné chybové odpovědi.
+**Krok 2 – HTTP API administrace a automatika** (Cloudflare Workers + Hyperdrive/PostgreSQL, 2026-10-18)
+- [~] API pro obrazovky – **hotovo:** přehled, audit, sklad, nákup (schválení, zrušení, změna dodavatele/množství) v `src/platform/http/AdminApi.ts`. **Zbývá:** dostupnost, dodavatelé, mapování produktů, feedy, pravidla, časová osa objednávky.
+- [~] API pro sklad – **hotovo:** sken při balení, reset balení, odeslání, `shipMany`, `approvePurchaseOrders`. **Zbývá:** sken při příjmu (`ReceivingSession` je jen v paměti → uložit rozpracovaný příjem do DB).
+- [x] Dashboard čte `fulfillment_orders`; `procurement_ready_to_ship` (nikdo do ní nezapisoval) zrušena migrací 006.
+- [x] Plánovač: Cloudflare Cron Triggers → `ProcurementScheduler` (plán každých 15 min, stavy dodavatelů 1× za hodinu), idempotentní podle cron slotu, chyba jednoho e-shopu nezastaví ostatní.
+- [x] Validace vstupů, limit 64 kB, `Idempotency-Key` u změn, jednotné chyby `{ error: { code, message } }`, bez úniku interních detailů.
 
 **Krok 3 – Přihlášení (S1) a skutečná administrace**
 - [ ] Přihlášení; každý uživatel vidí jen data svého e-shopu (tenant z relace, nikdy z parametru).
@@ -60,9 +67,9 @@ Výchozí volby (lze změnit): databáze PostgreSQL; expedice jen kompletních b
 - [ ] Odstranit inline `onclick` z `dashboard.js` → pak z CSP zmizí `'unsafe-inline'`.
 
 **Krok 4 – Obecné rozhraní platformy + adaptér Shoptetu (I1–I3, bez ověření do získání účtu)**
-- [ ] Obecné rozhraní: instalace/odinstalace, webhooky, načtení objednávek, stav platby, zápis stavů a skladu.
-- [ ] Shoptet: instalace přes OAuth, bezpečné uložení tokenu (ne `InMemoryTenantSecretsManager`), smazání dat po odinstalaci (GDPR).
-- [ ] Shoptet: ověření podpisu webhooků, idempotentní zpracování.
+- [x] Obecné rozhraní `PlatformAdapter` + `PlatformRegistry` (`src/core/platform/PlatformAdapter.ts`, registrace v `src/platform/platforms.ts`); obecné cesty `/platforms/<platforma>/install` a `/webhook`.
+- [~] Bezpečné uložení tokenů (AES-256-GCM, `EncryptedPostgresCredentialsStore`) a smazání všech dat po odinstalaci (`TenantLifecycleService`) – **hotovo obecně pro každou platformu**. **Zbývá:** Shoptet adaptér – výměna OAuth kódu za token (`lifecycle.install`).
+- [~] Zpracování webhooků obecně hotové (rychlá odpověď, zpracování na pozadí, idempotentní). **Zbývá:** Shoptet `webhooks.verifyAndParse` (ověření podpisu).
 - [ ] Shoptet: převod objednávek do `CustomerOrderLine` a `FulfillmentService.upsertOrder` (včetně EAN).
 - [ ] Shoptet: `PaymentStatusPort` – převod stavu platby do `PaymentInfo` (API i CSV). **Bez toho se nic nenakoupí ani neodešle.**
 - [ ] Shoptet: zápis stavů objednávek a skladu zpět (dnes `ShoptetOutboundSync` jen simulace); klient zatím umí jen GET.

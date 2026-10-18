@@ -48,8 +48,25 @@ Feedy / API dodavatelů         ──adaptér──▶ SupplierCatalogPort  ─
 - `migrations/` – SQL migrace, spouštět v pořadí `001` → `005`.
 - `frontend/` – prezentační web a interaktivní demo s ukázkovými daty (nejde o administraci doplňku).
 
-**Nová platforma** = nový adaptér, který implementuje porty v `src/core/procurement/ports.ts` a převede
-objednávky (včetně stavu platby do `PaymentInfo`) na `CustomerOrderLine`. Jádro se nemění.
+- `src/core/platform/` – **obecné rozhraní platformy** (`PlatformAdapter`, `PlatformRegistry`).
+- `src/platform/http/AdminApi.ts` – HTTP API administrace (`/api/v1/...`).
+- `src/platform/cloudflare/backend.ts` – složení služby pro Cloudflare Workers (API, instalace, webhooky, cron).
+
+### Napojení libovolné platformy (Shoptet, WooCommerce, Upgates, Shopify, …)
+
+Celá služba mluví s e-shopem **jen** přes `PlatformAdapter`. Nová platforma znamená:
+
+1. Napsat adaptér (`src/platform/<platforma>/`), který implementuje:
+   - `commerce(ctx)` – nevyřízené objednávky → `CustomerOrderLine` (včetně `PaymentInfo`),
+   - `payments(ctx)` – čerstvý stav platby (ověřuje se před nákupem, balením i odesláním),
+   - volitelně `outbound(ctx)` – zápis stavů objednávek a skladu zpět,
+   - volitelně `webhooks.verifyAndParse` – ověření podpisu a převod na `PlatformEvent`,
+   - volitelně `lifecycle.install` – instalační callback (např. OAuth kód → token).
+2. Zaregistrovat ho v `src/platform/platforms.ts`: `platforms.register(new MojePlatformaAdapter(...))`.
+
+Zbytek je společný: instalace `/platforms/<platforma>/install`, webhooky `/platforms/<platforma>/webhook`,
+šifrované uložení tokenů, smazání všech dat po odinstalaci, plánovač, API administrace. Jádro se nemění.
+Dokud adaptér chybí, platí bezpečné výchozí chování: neznámý stav platby ⇒ objednávka zůstane zamčená.
 
 ## Ochrana dat
 
@@ -67,4 +84,26 @@ npm test
 npm run dev        # lokální server prezentačního webu a dema
 ```
 
-Nasazení prezentačního webu: `npm run deploy` (Cloudflare Workers, konfigurace ve `wrangler.jsonc`).
+## Nasazení (Cloudflare Workers + PostgreSQL přes Hyperdrive)
+
+Jeden Worker obsluhuje web, demo, API administrace (`/api/v1`), instalace a webhooky platforem
+(`/platforms/...`) a plánovač (Cron Triggers).
+
+```bash
+# 1) PostgreSQL (např. Neon / Supabase) – spustit migrace v pořadí 001 → 006
+psql "$DATABASE_URL" -f migrations/001_procurement_core.sql   # … až 006
+
+# 2) Hyperdrive – vrácené id vložit do wrangler.jsonc (hyperdrive[0].id)
+npx wrangler hyperdrive create chytry-nakupci-db --connection-string="$DATABASE_URL"
+
+# 3) Tajné klíče (nikdy do repozitáře)
+openssl rand -base64 32 | npx wrangler secret put CREDENTIALS_ENCRYPTION_KEY
+openssl rand -base64 48 | npx wrangler secret put ADMIN_API_TOKEN     # prozatímní přihlášení do API
+npx wrangler secret put ADMIN_TENANT_ID                                # e-shop, ke kterému token patří
+
+# 4) Nasazení (spustí typecheck a testy)
+npm run deploy
+```
+
+Přihlášení do API je zatím **prozatímní** (`Authorization: Bearer <ADMIN_API_TOKEN>` → jeden e-shop).
+Změny vyžadují hlavičku `Idempotency-Key` (opakovaný požadavek se neprovede dvakrát).

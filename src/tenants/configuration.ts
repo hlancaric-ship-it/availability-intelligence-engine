@@ -1,4 +1,5 @@
-export type IntegrationMode = 'api' | 'import';
+import type { IntegrationMode } from '../core/platform/PlatformAdapter.js';
+export type { IntegrationMode };
 
 export interface TenantConfig {
     tenantId: string;

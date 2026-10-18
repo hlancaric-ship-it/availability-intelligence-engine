@@ -50,9 +50,20 @@ export interface DashboardReaderPort {
 }
 
 import type { TransactionalSql } from '../persistence/PostgresProcurementRepository.js';
+import type { AuditEntry, AuditReaderPort } from '../http/AdminApi.js';
 
-export class PostgresDashboardReader implements DashboardReaderPort {
+export class PostgresDashboardReader implements DashboardReaderPort, AuditReaderPort {
     public constructor(private readonly db: TransactionalSql) {}
+
+    public async listAudit(tenantId: string, limit: number): Promise<AuditEntry[]> {
+        const safeLimit = Math.min(Math.max(Math.trunc(limit) || 100, 1), 500);
+        const res = await this.db.transaction((tx) => tx.query<{ id: string; event_type: string; entity_id: string; payload: unknown; occurred_at: string | Date }>(
+            `SELECT id, event_type, entity_id, payload, occurred_at FROM procurement_audit_log
+             WHERE tenant_id = $1 ORDER BY occurred_at DESC, id DESC LIMIT $2`,
+            [tenantId, safeLimit],
+        ));
+        return (res.rows ?? []).map((r) => ({ id: String(r.id), type: r.event_type, entityId: r.entity_id, payload: r.payload, occurredAt: new Date(r.occurred_at).toISOString() }));
+    }
 
     public async getDashboardData(tenantId: string): Promise<DashboardData> {
         return this.db.transaction(async (tx) => {
@@ -91,19 +102,21 @@ export class PostgresDashboardReader implements DashboardReaderPort {
                 exception: true,
             }));
 
-            // 3. Ready to ship allocations / received items
-            const readyQuery = await tx.query<{ customer_order_line_id: string; allocated_quantity: string; ready_at: string }>(
-                `SELECT customer_order_line_id, allocated_quantity, ready_at
-                 FROM procurement_ready_to_ship
-                 WHERE tenant_id = $1
-                 ORDER BY ready_at DESC
+            // 3. Orders released by the safety lock (complete + paid) – warehouse can pack / ship them.
+            const readyQuery = await tx.query<{ order_id: string; status: string; lines_count: string; units: string }>(
+                `SELECT o.order_id, o.status, COUNT(l.customer_order_line_id) AS lines_count, COALESCE(SUM(l.ordered_quantity), 0) AS units
+                 FROM fulfillment_orders o
+                 LEFT JOIN fulfillment_order_lines l ON l.tenant_id = o.tenant_id AND l.order_id = o.order_id
+                 WHERE o.tenant_id = $1 AND o.status IN ('READY_TO_PACK','PACKING','PACKED')
+                 GROUP BY o.order_id, o.status, o.updated_at
+                 ORDER BY o.updated_at ASC
                  LIMIT 50`,
                 [tenantId],
             );
             const ready: DashboardItem[] = (readyQuery.rows ?? []).map((row) => ({
-                id: row.customer_order_line_id,
-                detail: `Alokováno: ${row.allocated_quantity} ks`,
-                state: 'READY_TO_SHIP',
+                id: row.order_id,
+                detail: `${row.lines_count} položek, ${row.units} ks`,
+                state: row.status,
             }));
 
             return { pending, exceptions, ready };

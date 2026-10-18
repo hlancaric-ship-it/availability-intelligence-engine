@@ -40,12 +40,12 @@ describe('K7: izolace e-shopů', () => {
         await wf.createPlan('shopA', 'ev1', { approvalMode: 'automatic' } as any);
         expect([...keys].every((k) => k.startsWith('shopA:'))).toBe(true);
     });
-    test('dashboard čte READY_TO_SHIP jen pro daný e-shop', async () => {
+    test('dashboard čte objednávky připravené k balení jen pro daný e-shop', async () => {
         const queries: { sql: string; params?: unknown[] }[] = [];
         const db = { transaction: async (fn: any) => fn({ query: async (sql: string, params?: unknown[]) => { queries.push({ sql, params }); return { rows: [] }; } }) } as any;
         await new PostgresDashboardReader(db).getDashboardData('shopA');
-        const ready = queries.find((q) => q.sql.includes('procurement_ready_to_ship'))!;
-        expect(ready.sql).toMatch(/WHERE tenant_id = \$1/);
+        const ready = queries.find((q) => q.sql.includes('fulfillment_orders'))!;
+        expect(ready.sql).toMatch(/WHERE o.tenant_id = \$1/);
         expect(ready.params).toEqual(['shopA']);
     });
     test('migrace 004 přidává tenant_id do ready_to_ship a external_id do PO', () => {

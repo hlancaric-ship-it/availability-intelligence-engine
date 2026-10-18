@@ -1,4 +1,7 @@
-interface Env {
+import { handleBackendRequest, handleScheduled } from './src/platform/cloudflare/backend.js';
+import type { BackendEnv } from './src/platform/cloudflare/backend.js';
+
+interface Env extends BackendEnv {
   ASSETS: Fetcher;
 }
 
@@ -47,10 +50,15 @@ function redirect(url: URL, pathname: string, status = 308): Response {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    return withSecurityHeaders(await route(request, env));
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Backend (admin API, platform install/webhooks) first; everything else is the static site + demo.
+    const backend = await handleBackendRequest(request, env, ctx);
+    return withSecurityHeaders(backend ?? await route(request, env));
   },
-};
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    await handleScheduled(controller.cron, controller.scheduledTime, env, ctx);
+  },
+} satisfies ExportedHandler<Env>;
 
 async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);

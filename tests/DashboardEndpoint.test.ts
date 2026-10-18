@@ -5,7 +5,7 @@ import type { SqlTransaction, SqlQueryResult } from '../src/platform/persistence
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 describe('Phase 4 - PostgresDashboardReader', () => {
-    test('queries pending POs, audit exceptions, and ready_to_ship allocations', async () => {
+    test('queries pending POs, audit exceptions, and orders released for packing', async () => {
         const mockPendingRows = [
             { id: 'po-1', supplier_id: 'sup-A', status: 'PENDING_APPROVAL', lines_count: '3' },
         ];
@@ -19,7 +19,7 @@ describe('Phase 4 - PostgresDashboardReader', () => {
             },
         ];
         const mockReadyRows = [
-            { customer_order_line_id: 'col-1', allocated_quantity: '5', ready_at: '2026-08-28T11:00:00Z' },
+            { order_id: 'OBJ-1', status: 'READY_TO_PACK', lines_count: '2', units: '5' },
         ];
 
         const queryFn = vi.fn().mockImplementation(async (sql: string) => {
@@ -29,7 +29,7 @@ describe('Phase 4 - PostgresDashboardReader', () => {
             if (sql.includes('procurement_audit_log')) {
                 return { rowCount: mockExceptionRows.length, rows: mockExceptionRows } as SqlQueryResult<unknown>;
             }
-            if (sql.includes('procurement_ready_to_ship')) {
+            if (sql.includes('fulfillment_orders')) {
                 return { rowCount: mockReadyRows.length, rows: mockReadyRows } as SqlQueryResult<unknown>;
             }
             return { rowCount: 0, rows: [] } as SqlQueryResult<unknown>;
@@ -58,7 +58,7 @@ describe('Phase 4 - PostgresDashboardReader', () => {
             },
         ]);
         expect(data.ready).toEqual([
-            { id: 'col-1', detail: 'Alokováno: 5 ks', state: 'READY_TO_SHIP' },
+            { id: 'OBJ-1', detail: '2 položek, 5 ks', state: 'READY_TO_PACK' },
         ]);
     });
 });

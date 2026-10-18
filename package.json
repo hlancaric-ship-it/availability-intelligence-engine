@@ -4,18 +4,24 @@
   "description": "Platform-agnostic procurement orchestration core",
   "scripts": {
     "dev": "tsx scripts/dev-server.ts",
-    "deploy": "wrangler deploy",
+    "deploy": "npm run typecheck && npm test && wrangler deploy",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261018.1",
     "@types/node": "^26.4.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.151.1"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
   }
 }

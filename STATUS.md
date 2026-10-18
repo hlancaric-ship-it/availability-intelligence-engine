@@ -22,18 +22,23 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 | Hromadné akce: odeslat vybrané objednávky, schválit vybrané nákupy | `FulfillmentService.shipMany`, `ProcurementWorkflow.approvePurchaseOrders` |
 | Databáze skladu s ochranou proti souběžné úpravě | `migrations/005_fulfillment.sql`, `src/platform/persistence/PostgresFulfillmentRepository.ts` |
 
+| HTTP API administrace (přehled, audit, sklad, nákup), validace, idempotence | `src/platform/http/AdminApi.ts` |
+| Obecné rozhraní platformy, směrování plateb podle platformy e-shopu | `src/core/platform/PlatformAdapter.ts` |
+| Instalace / odinstalace se smazáním všech dat (obecně), šifrované tokeny | `src/platform/operations/TenantLifecycle.ts`, `EncryptedPostgresCredentialsStore.ts` |
+| Plánovač (Cron Triggers), běh na Cloudflare Workers + Hyperdrive | `src/platform/operations/Scheduler.ts`, `src/platform/cloudflare/backend.ts` |
+
 ## ❌ Chybí – blokuje ostrý provoz a zveřejnění doplňku
 
 | Bod | Co chybí |
 |---|---|
 | S1 | Skutečné přihlášení do administrace (každý e-shop vidí jen svá data). |
-| I1 | Instalace a odinstalace doplňku na platformě (u Shoptetu OAuth, uložení tokenu, smazání dat po odinstalaci). |
-| I2 | Webhooky platformy (nové / změněné / zaplacené objednávky). |
+| I1 | Shoptet adaptér: výměna OAuth kódu za token (obecná instalace, šifrované uložení a smazání dat už jsou hotové). |
+| I2 | Shoptet adaptér: ověření podpisu webhooků (obecné zpracování webhooků už je hotové). |
 | I3 | Administrace napojená na skutečná data (dnes je `frontend/nexustp` jen demo s ukázkovými daty). |
 | – | Převod stavu platby ze Shoptetu (API i CSV) do `PaymentInfo`. Bez něj se z bezpečnostních důvodů nic nenakoupí. |
 | – | Adaptér platformy pro `PaymentStatusPort` (čerstvý stav platby ze Shoptetu) a pro načtení objednávek do skladu (`FulfillmentService.upsertOrder`, včetně EAN). |
 | – | Zápis zpět do e-shopu (stavy objednávek, sklad). `ShoptetOutboundSync` je zatím jen simulace. |
-| – | Provozní nasazení služby: běh workerů, tajné klíče e-shopů (dnes jen `InMemoryTenantSecretsManager`), monitoring. |
+| – | Provozní nasazení: vytvořit databázi a Hyperdrive, nastavit tajné klíče, alerty nad Workers Logs. |
 
 ## 🟡 Známé nedostatky
 

@@ -3,23 +3,32 @@
   "name": "availability-dashboard",
   "main": "worker.ts",
   "compatibility_date": "2026-08-30",
+  // `pg` (PostgreSQL driver) needs Node.js APIs on Workers.
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./frontend",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // API, install and webhook paths must reach the Worker, never the SPA fallback.
+    "run_worker_first": ["/api/*", "/platforms/*"]
   },
+  // PostgreSQL through Cloudflare Hyperdrive (connection pooling). Create it once:
+  //   npx wrangler hyperdrive create chytry-nakupci-db --connection-string="postgres://USER:PASSWORD@HOST:5432/DB"
+  // and paste the returned id below. Secrets (never in this file):
+  //   npx wrangler secret put CREDENTIALS_ENCRYPTION_KEY   (openssl rand -base64 32)
+  //   npx wrangler secret put ADMIN_API_TOKEN              (openssl rand -base64 48)
+  //   npx wrangler secret put ADMIN_TENANT_ID
+  "hyperdrive": [
+    { "binding": "HYPERDRIVE", "id": "REPLACE_WITH_HYPERDRIVE_ID" }
+  ],
+  // Must match CRON_PLANNING / CRON_SUPPLIER_STATUS in src/platform/cloudflare/backend.ts.
+  "triggers": { "crons": ["*/15 * * * *", "5 * * * *"] },
+  "observability": { "enabled": true },
   "routes": [
-    {
-      "pattern": "l-code-dynamics.com/nexus*",
-      "zone_name": "l-code-dynamics.com"
-    },
-    {
-      "pattern": "l-code-dynamics.com/nexustp*",
-      "zone_name": "l-code-dynamics.com"
-    },
-    {
-      "pattern": "l-code-dynamics.com/availability*",
-      "zone_name": "l-code-dynamics.com"
-    }
+    { "pattern": "l-code-dynamics.com/nexus*", "zone_name": "l-code-dynamics.com" },
+    { "pattern": "l-code-dynamics.com/nexustp*", "zone_name": "l-code-dynamics.com" },
+    { "pattern": "l-code-dynamics.com/availability*", "zone_name": "l-code-dynamics.com" },
+    { "pattern": "l-code-dynamics.com/api/*", "zone_name": "l-code-dynamics.com" },
+    { "pattern": "l-code-dynamics.com/platforms/*", "zone_name": "l-code-dynamics.com" }
   ]
 }
