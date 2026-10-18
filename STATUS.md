@@ -16,6 +16,11 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 | Dostupnost a řazení produktů | `src/core/availability/`, `src/core/ranking/` |
 | Shoptet: čtení přes API (jen GET, limity 429/503), normalizace exportu | `src/platform/shoptet/` |
 | Dodavatelé: obecný API klient, CSV bez API | `src/platform/suppliers/` |
+| Sklad a expedice: bezpečnostní zámek (kompletnost + platba), stavy až po „odesláno“ | `src/core/fulfillment/FulfillmentEngine.ts` |
+| Balení skenerem (EAN/SKU, špatný produkt, kus navíc), příjem zboží skenerem (fronta od nejstaršího nákupu) | `src/core/fulfillment/` |
+| `markReadyToShip`, ověření platby u platformy před balením a odesláním, audit | `src/core/fulfillment/FulfillmentService.ts` |
+| Hromadné akce: odeslat vybrané objednávky, schválit vybrané nákupy | `FulfillmentService.shipMany`, `ProcurementWorkflow.approvePurchaseOrders` |
+| Databáze skladu s ochranou proti souběžné úpravě | `migrations/005_fulfillment.sql`, `src/platform/persistence/PostgresFulfillmentRepository.ts` |
 
 ## ❌ Chybí – blokuje ostrý provoz a zveřejnění doplňku
 
@@ -26,7 +31,7 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 | I2 | Webhooky platformy (nové / změněné / zaplacené objednávky). |
 | I3 | Administrace napojená na skutečná data (dnes je `frontend/nexustp` jen demo s ukázkovými daty). |
 | – | Převod stavu platby ze Shoptetu (API i CSV) do `PaymentInfo`. Bez něj se z bezpečnostních důvodů nic nenakoupí. |
-| – | Implementace `FulfillmentReadinessPort.markReadyToShip` (ukládat `tenant_id`, před uvolněním k expedici znovu ověřit platbu). |
+| – | Adaptér platformy pro `PaymentStatusPort` (čerstvý stav platby ze Shoptetu) a pro načtení objednávek do skladu (`FulfillmentService.upsertOrder`, včetně EAN). |
 | – | Zápis zpět do e-shopu (stavy objednávek, sklad). `ShoptetOutboundSync` je zatím jen simulace. |
 | – | Provozní nasazení služby: běh workerů, tajné klíče e-shopů (dnes jen `InMemoryTenantSecretsManager`), monitoring. |
 
@@ -40,5 +45,6 @@ které v kódu nejsou. Přehled níže odpovídá skutečnému obsahu repozitá�
 
 ## Co v demu je, ale v backendu ne
 
-Demo (`/nexustp`) ukazuje i skenování čárových kódů, tisk štítků, hromadné akce, dopravce, feedy a pravidla.
-Tyto části jsou zatím **jen v prezentaci** s ukázkovými daty; backend pro ně neexistuje.
+Demo (`/nexustp`) ukazuje skenování, tisk štítků, hromadné akce, dopravce, feedy a pravidla s ukázkovými daty.
+Backend pro skenování, zámek expedice a hromadné akce už existuje (viz výše), ale **demo na něj zatím není napojené**
+(HTTP API a přihlášení – krok 2 a 3). Štítky a dopravci backend zatím nemají.

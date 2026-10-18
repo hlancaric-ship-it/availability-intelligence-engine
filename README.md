@@ -23,7 +23,11 @@ Interní (technický) název repozitáře: `availability-intelligence-engine`.
    (idempotence + odečet už objednaného množství).
 5. **Sleduje stav u dodavatele** (přijato / odesláno / zrušeno) podle čísla objednávky dodavatele.
 6. **Po naskladnění přiřadí zboží** ke konkrétním řádkům zákaznických objednávek.
-7. **Zapisuje audit** všech rozhodnutí.
+7. **Hlídá sklad a expedici.** Objednávku pustí k balení, jen když je kompletní a zaplacená (bezpečnostní zámek;
+   částečnou expedici lze povolit). Skladník balí skenerem (EAN/SKU) – systém odmítne špatný produkt i kus navíc.
+   Platbu ověří u platformy znovu před balením i před odesláním. Příjem zboží také skenerem.
+8. **Hromadné akce:** schválení vybraných nákupů, odeslání vybraných objednávek (každá zvlášť, chyba jedné nezastaví ostatní).
+9. **Zapisuje audit** všech rozhodnutí.
 
 Dále umí: vyhodnocení a řazení dostupnosti produktů, prodejní jednotky (ks / balení / paleta, převody, zálohy
 na obaly).
@@ -36,11 +40,12 @@ Feedy / API dodavatelů         ──adaptér──▶ SupplierCatalogPort  ─
                                             SupplierDispatchPort ◀┘                     ─▶ FulfillmentReadinessPort
 ```
 
+- `src/core/fulfillment/` – sklad a expedice (zámek, skenování, příjem, odeslání).
 - `src/core/` – obchodní logika bez závislosti na platformě, HTTP nebo databázi.
 - `src/platform/shoptet/` – adaptér Shoptetu (zatím jen čtení přes API a normalizace CSV/XML exportu).
 - `src/platform/suppliers/` – dodavatelé (obecný API klient, CSV bez API).
 - `src/platform/persistence/` – PostgreSQL; každý záznam je oddělen podle e-shopu (`tenant_id`).
-- `migrations/` – SQL migrace, spouštět v pořadí `001` → `004`.
+- `migrations/` – SQL migrace, spouštět v pořadí `001` → `005`.
 - `frontend/` – prezentační web a interaktivní demo s ukázkovými daty (nejde o administraci doplňku).
 
 **Nová platforma** = nový adaptér, který implementuje porty v `src/core/procurement/ports.ts` a převede

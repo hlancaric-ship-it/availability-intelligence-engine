@@ -1,4 +1,5 @@
 import { ProcurementEngine } from './ProcurementEngine.js';
+import { runBulk } from '../fulfillment/FulfillmentService.js';
 import type { AuditPort, CommercePlatformPort, FulfillmentReadinessPort, IdempotencyPort, PurchaseOrderPort, SupplierCatalogPort, SupplierDispatchPort, LoggerPort } from './ports.js';
 import type { GoodsReceiptLine, ProcurementPolicy, PurchaseOrder } from './types.js';
 
@@ -139,6 +140,11 @@ export class ProcurementWorkflow {
             await this.audit.append({ tenantId, type: 'PURCHASE_ORDER_APPROVAL_FAILED', entityId: eventId, payload: { purchaseOrderId, error: safeError }, occurredAt: new Date().toISOString() });
             throw error;
         }
+    }
+
+    /** Bulk approval ("Schválit vše"). Each PO gets its own idempotency key `<eventId>:<poId>`; failures don't stop others. */
+    public approvePurchaseOrders(tenantId: string, eventId: string, purchaseOrderIds: readonly string[]) {
+        return runBulk(purchaseOrderIds, (id) => this.approvePurchaseOrder(tenantId, `${eventId}:${id}`, id));
     }
 
     public async syncSupplierStatus(tenantId: string, eventId: string) {
